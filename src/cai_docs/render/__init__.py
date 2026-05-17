@@ -67,16 +67,37 @@ class VaultWriter:
 
     # --- naming -------------------------------------------------------------
 
+    # Higher-priority types keep the bare name; others get a type-qualified one.
+    _TYPE_PRIORITY = {
+        "process": 0, "service_connector": 1, "connection": 2,
+        "process_object": 3, "guide": 4, "schema": 5, "resource": 6,
+        "deployment": 7, "project": 8, "unknown": 9,
+    }
+
     def _assign_note_names(self, assets: list[Asset]) -> dict[str, str]:
+        """Globally-unique, deterministic note names.
+
+        Obsidian resolves [[Name]] by basename, so every note MUST have a
+        unique basename or links land on the wrong asset / orphan duplicates.
+        On collision we disambiguate by asset type (then an index), and order
+        deterministically so the same input always yields the same names.
+        """
         names: dict[str, str] = {}
         used: set[str] = set()
-        for a in assets:
+        ordered = sorted(
+            assets,
+            key=lambda a: (self._TYPE_PRIORITY.get(a.asset_type, 9), a.key or ""),
+        )
+        for a in ordered:
             base = _sanitize(a.display_name or a.name or a.key)
             candidate = base
+            if candidate.lower() in used:
+                kind = a.asset_type.replace("_", " ")
+                candidate = f"{base} ({kind})"
             n = 2
             while candidate.lower() in used:
-                suffix = (a.guid or "")[:6] or str(n)
-                candidate = f"{base} ({suffix})"
+                kind = a.asset_type.replace("_", " ")
+                candidate = f"{base} ({kind} {n})"
                 n += 1
             used.add(candidate.lower())
             names[a.key] = candidate

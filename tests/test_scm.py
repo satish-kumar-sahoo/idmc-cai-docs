@@ -97,8 +97,12 @@ def test_full_pipeline_scm_no_unknown_noise(tmp_path):
     assert rep.counts_by_type.get("connection", 0) == 1
     assert rep.counts_by_type.get("service_connector", 0) == 1
     assert rep.counts_by_type.get("process", 0) == 1  # the .bpel
-    assert rep.counts_by_type.get("deployment", 0) == 1  # the .pdd
+    # the .pdd is merged into its .bpel process, not a standalone asset
+    assert rep.counts_by_type.get("deployment", 0) == 0
     # no jpg/.project pages, no standalone sidecar pages
     stems = {p.stem for p in (tmp_path / "v").rglob("*.md")}
     assert "flow" not in stems
     assert not any(s.startswith(".AppConnection") for s in stems)
+    # the merged deployment descriptor surfaces on the process page
+    bpel_md = next(p for p in (tmp_path / "v").rglob("SaveConfig*.md"))
+    assert "deployment descriptor merged" in bpel_md.read_text(encoding="utf-8")

@@ -103,6 +103,46 @@ def pair_sidecars(
     return assets, sidecar_meta
 
 
+def pair_deploy_descriptors(
+    files: list[RawFile],
+) -> tuple[list[RawFile], dict[str, RawFile]]:
+    """Pair each .pdd to the same-stem .bpel process (a deploy descriptor is
+    not a standalone asset). Returns (assets_without_paired_pdd,
+    {bpel_relpath: pdd_RawFile}). Unpaired .pdd stays an asset."""
+    bpel_by_stem: dict[str, list[RawFile]] = {}
+    for rf in files:
+        if rf.ext == "bpel":
+            stem = rf.relpath.rsplit("/", 1)[-1][: -len(".bpel")]
+            bpel_by_stem.setdefault(stem.lower(), []).append(rf)
+
+    pdd_map: dict[str, RawFile] = {}
+    paired_pdd: set[str] = set()
+    for rf in files:
+        if rf.ext != "pdd":
+            continue
+        stem = rf.relpath.rsplit("/", 1)[-1][: -len(".pdd")]
+        cands = bpel_by_stem.get(stem.lower())
+        if not cands:
+            continue
+        # prefer the bpel sharing the deepest common path with the pdd
+        pdd_parts = rf.relpath.split("/")
+        best = max(
+            cands,
+            key=lambda b: len(
+                [
+                    1
+                    for x, y in zip(b.relpath.split("/"), pdd_parts)
+                    if x == y
+                ]
+            ),
+        )
+        pdd_map[best.relpath] = rf
+        paired_pdd.add(rf.relpath)
+
+    kept = [f for f in files if f.relpath not in paired_pdd]
+    return kept, pdd_map
+
+
 def apply_sidecar(asset: Asset, info: dict, threshold: float = 0.45) -> None:
     """Merge authoritative sidecar metadata into an extracted asset."""
     if info.get("id"):

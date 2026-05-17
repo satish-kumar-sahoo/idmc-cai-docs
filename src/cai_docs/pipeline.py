@@ -11,7 +11,13 @@ from .graph import build_graph
 from .ingest import discover
 from .models import RunReport
 from .render import VaultWriter
-from .sidecar import apply_sidecar, normalize_object_info, pair_sidecars
+from .extract import merge_pdd
+from .sidecar import (
+    apply_sidecar,
+    normalize_object_info,
+    pair_deploy_descriptors,
+    pair_sidecars,
+)
 from .xmlmodel import parse
 
 
@@ -30,6 +36,7 @@ def run(config: Config) -> RunReport:
     report.files_seen = len(raw_files)
 
     asset_files, sidecar_meta = pair_sidecars(raw_files)
+    asset_files, pdd_map = pair_deploy_descriptors(asset_files)
 
     assets = []
     for raw in asset_files:
@@ -44,6 +51,10 @@ def run(config: Config) -> RunReport:
             info = normalize_object_info(doc.raw_text)  # unpaired sidecar
         if info:
             apply_sidecar(asset, info, config.confidence_threshold)
+
+        pdd_rf = pdd_map.get(raw.relpath)
+        if pdd_rf is not None:
+            merge_pdd(asset, parse(pdd_rf))
 
         assets.append(asset)
 

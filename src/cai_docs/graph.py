@@ -62,11 +62,24 @@ def _basename_key(value: str | None) -> str:
     return base
 
 
+# Which asset types a reference of a given kind should prefer to bind to.
+_EXPECT = {
+    "subprocess": ("process",),
+    "connection": ("connection", "service_connector", "process"),
+    "service_connector": ("service_connector", "connection"),
+    "connector_hint": ("connection", "service_connector"),
+    "catalog_resource": (
+        "resource", "schema", "process_object", "process",
+        "guide", "connection", "service_connector",
+    ),
+}
+
+
 def build_graph(assets: list[Asset]) -> AssetGraph:
     g = AssetGraph(assets=list(assets))
 
     by_guid: dict[str, Asset] = {}
-    by_name: dict[str, Asset] = {}
+    by_name: dict[str, list[Asset]] = {}
     for a in assets:
         if a.guid:
             by_guid.setdefault(a.guid, a)
@@ -78,7 +91,34 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
         }
         for nm in keys:
             if nm:
-                by_name.setdefault(_norm(nm), a)
+                bucket = by_name.setdefault(_norm(nm), [])
+                if a not in bucket:
+                    bucket.append(a)
+
+    def resolve(ref) -> Asset | None:
+        if ref.target_guid and ref.target_guid in by_guid:
+            return by_guid[ref.target_guid]
+        cands: list[Asset] = []
+        seen_keys: set[str] = set()
+        for cand in (
+            ref.target_name,
+            _strip_connector_prefix(ref.target_name or ""),
+            _basename_key(ref.raw),
+            _basename_key(ref.target_name),
+            _strip_connector_prefix(_basename_key(ref.raw)),
+        ):
+            for a in by_name.get(_norm(cand or ""), []):
+                if a.key not in seen_keys:
+                    seen_keys.add(a.key)
+                    cands.append(a)
+        if not cands:
+            return None
+        cands.sort(key=lambda x: x.key or "")  # deterministic tie-break
+        for want in _EXPECT.get(ref.kind, ()):  # type-aware preference
+            for c in cands:
+                if c.asset_type == want:
+                    return c
+        return cands[0]
 
     seen: set[tuple[str, str, str]] = set()
 
@@ -102,21 +142,7 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
     for a in assets:
         for ref in a.references:
             kind = _EDGE_KIND.get(ref.kind, "references-resource")
-            target: Asset | None = None
-            if ref.target_guid and ref.target_guid in by_guid:
-                target = by_guid[ref.target_guid]
-            if target is None:
-                candidates = (
-                    ref.target_name,
-                    _strip_connector_prefix(ref.target_name or ""),
-                    _basename_key(ref.raw),
-                    _basename_key(ref.target_name),
-                    _strip_connector_prefix(_basename_key(ref.raw)),
-                )
-                for cand in candidates:
-                    if cand and _norm(cand) in by_name:
-                        target = by_name[_norm(cand)]
-                        break
+            target = resolve(ref)
             if target is not None and target.key != a.key:
                 link(a, target.key, kind, target.name, resolved=True)
             elif target is None:

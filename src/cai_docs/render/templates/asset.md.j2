@@ -6,6 +6,11 @@
 {% if notes %}{% for n in notes %}> - {{ n }}
 {% endfor %}{% endif %}
 {% endif %}
+{% if notes and not needs_review %}
+> [!note] Notes
+{% for n in notes %}> - {{ n }}
+{% endfor %}
+{% endif %}
 ## Summary
 
 {{ summary }}

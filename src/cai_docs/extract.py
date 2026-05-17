@@ -441,8 +441,13 @@ def _collect_bpel_refs(payload) -> list[Reference]:
         if _is_platform_ref(loc):
             continue
         add("catalog_resource", loc, loc, ctx=f"bpel import ({_attr(imp, 'importType') or 'wsdl'})")
+    self_name = (_attr(payload, "name") or "").lower()
+    invoked = {_attr(i, "partnerLink") for i in descendants_local(payload, "invoke")}
     for pl in descendants_local(payload, "partnerLink"):
         nm = _attr(pl, "name")
+        # the BPEL's own entry point (myRole / not invoked) is not a dependency
+        if not nm or nm.lower() == self_name or nm not in invoked:
+            continue
         add("connection", nm, nm, ctx="bpel partnerLink")
     for inv in descendants_local(payload, "invoke"):
         pl = _attr(inv, "partnerLink")
@@ -522,6 +527,53 @@ def _raw_dump(payload, cap: int = 400) -> list[tuple[str, str]]:
 
 
 # --- entry point ------------------------------------------------------------
+
+
+def merge_pdd(asset: Asset, pdd_doc: XmlDoc) -> None:
+    """Merge a paired .pdd deploy descriptor into its .bpel process asset."""
+    root = pdd_doc.tree
+    if root is None:
+        return
+    asset.config["deploy.location"] = _attr(root, "location")
+    asset.config["deploy.platform"] = _attr(root, "platform")
+    for pl in descendants_local(root, "partnerLink"):
+        name = _attr(pl, "name")
+        roles = []
+        for r in pl:
+            if isinstance(r.tag, str) and lname(r) in ("myRole", "partnerRole"):
+                svc = _attr(r, "service")
+                binding = _attr(r, "binding") or _attr(r, "invokeHandler")
+                roles.append(
+                    f"{lname(r)}({svc or binding or 'n/a'})"
+                )
+                # partnerRole = an outbound dependency; myRole = own entry point
+                if lname(r) == "partnerRole" and svc and _norm_self(svc, asset):
+                    asset.references.append(
+                        Reference(
+                            kind="connection", raw=svc, target_name=svc,
+                            context=f"pdd partnerLink {name}",
+                        )
+                    )
+        if name:
+            asset.config[f"deploy.partner.{name}"] = ", ".join(roles) or "n/a"
+    for w in descendants_local(root, "wsdl"):
+        loc = _attr(w, "location") or _attr(w, "namespace")
+        if loc and not _is_platform_ref(loc):
+            asset.references.append(
+                Reference(
+                    kind="catalog_resource", raw=loc, target_name=loc,
+                    context="pdd reference",
+                )
+            )
+    asset.notes.append("deployment descriptor merged (.pdd)")
+
+
+def _norm_self(svc: str, asset: Asset) -> bool:
+    """True if svc is a real outbound dep (not the process's own service name)."""
+    return svc.strip().lower() not in {
+        (asset.name or "").lower(),
+        (asset.display_name or "").lower(),
+    }
 
 
 def extract(

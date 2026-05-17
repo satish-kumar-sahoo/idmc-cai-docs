@@ -166,8 +166,14 @@ class Asset:
 
     @property
     def key(self) -> str:
-        """Stable identity used for graph indexing and wikilinks."""
-        return self.guid or self.name or self.source_relpath
+        """Globally-unique identity for graph indexing and note naming.
+
+        Must be unique per asset: source_relpath is unique within an export,
+        whereas `name` is not (many assets share a name across folders), and
+        keying on a shared name collapses distinct assets in the graph and the
+        note-name map.
+        """
+        return self.guid or self.source_relpath
 
 
 # --- graph ------------------------------------------------------------------
