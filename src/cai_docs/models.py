@@ -124,6 +124,15 @@ class ConnectorAction:
 
 
 @dataclass
+class DataTable:
+    """Tabular view of a repeated-record reference-data file."""
+
+    title: str
+    columns: list[str] = field(default_factory=list)
+    rows: list[list[str]] = field(default_factory=list)
+
+
+@dataclass
 class SampleData:
     name: str
     field_keys: list[str] = field(default_factory=list)
@@ -169,6 +178,7 @@ class Asset:
     references: list[Reference] = field(default_factory=list)
     sql_blocks: list[SqlBlock] = field(default_factory=list)
     connector_actions: list[ConnectorAction] = field(default_factory=list)
+    tables: list[DataTable] = field(default_factory=list)
     expressions: list[ExpressionItem] = field(default_factory=list)
     rest_trigger: bool = False
     # where it executes: "Cloud" | "Secure Agent" | "Cloud or Secure Agent" | ""

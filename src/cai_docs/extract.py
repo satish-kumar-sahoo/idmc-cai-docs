@@ -14,6 +14,7 @@ import re
 from .models import (
     Asset,
     ConnectorAction,
+    DataTable,
     ExpressionItem,
     Field,
     FlowEdge,
@@ -678,6 +679,91 @@ def _extract_service_connector(payload, asset: Asset) -> None:
             asset.connector_actions.append(ca)
 
 
+def _localize(key: str) -> str:
+    return key.rsplit("}", 1)[-1]
+
+
+def _cell_value(el) -> str:
+    """One table cell from a record's child element."""
+    kids = [c for c in el if isinstance(c.tag, str)]
+    if not kids:
+        txt = (el.text or "").strip()
+        if not txt:
+            txt = " ".join(
+                f"{_localize(k)}={v}" for k, v in el.attrib.items()
+            )
+        return _safe_value(_attr(el, "name") or lname(el), txt)
+    parts: list[str] = []
+    for c in kids:
+        ct = (c.text or "").strip()
+        if not ct:
+            ct = " ".join(f"{_localize(k)}={v}" for k, v in c.attrib.items())
+        if ct:
+            parts.append(_safe_value(_attr(c, "name") or lname(c), ct))
+    return "; ".join(p for p in parts if p)
+
+
+def _record_columns(rec) -> dict[str, str]:
+    cols: dict[str, str] = {}
+    for k, v in rec.attrib.items():
+        cols[_localize(k)] = _safe_value(_localize(k), v)
+    for ch in rec:
+        if isinstance(ch.tag, str):
+            cols[lname(ch)] = _cell_value(ch)
+    return cols
+
+
+def _extract_reference_tables(
+    payload, max_tables: int = 12, max_rows: int = 1000, max_cols: int = 30
+) -> list["DataTable"]:
+    """Turn repeated-record reference data into tables.
+
+    Finds the outermost element whose children include >=2 elements sharing a
+    local name, treats those as rows, and unions their leaf-child / attribute
+    names into columns. Subtrees already turned into a table are not re-mined,
+    so a record's own inner lists become a joined cell, not nested tables.
+    """
+    tables: list[DataTable] = []
+    consumed: set[int] = set()
+    for parent in payload.iter():
+        if not isinstance(parent.tag, str) or id(parent) in consumed:
+            continue
+        groups: dict[str, list] = {}
+        for ch in parent:
+            if isinstance(ch.tag, str):
+                groups.setdefault(lname(ch), []).append(ch)
+        for tag, recs in groups.items():
+            if len(recs) < 2:
+                continue
+            # records must be non-trivial (have a child element or attribute)
+            if not any(
+                len(r.attrib) or any(isinstance(c.tag, str) for c in r) for r in recs
+            ):
+                continue
+            order: list[str] = []
+            mapped: list[dict[str, str]] = []
+            for r in recs[:max_rows]:
+                cmap = _record_columns(r)
+                for k in cmap:
+                    if k not in order:
+                        order.append(k)
+                mapped.append(cmap)
+            if not order:
+                continue
+            order = order[:max_cols]
+            rows = [
+                [(cm.get(c, "") or "").replace("\n", " ").strip()[:300] for c in order]
+                for cm in mapped
+            ]
+            tables.append(DataTable(title=tag, columns=order, rows=rows))
+            for r in recs:
+                for d in r.iter():
+                    consumed.add(id(d))
+            if len(tables) >= max_tables:
+                return tables
+    return tables
+
+
 def _raw_dump(payload, cap: int = 400) -> list[tuple[str, str]]:
     dump: list[tuple[str, str]] = []
     if payload is None:
@@ -848,6 +934,8 @@ def extract(
                 _extract_connection(payload, asset)
             elif root_lname == "businessconnector" or asset_type == "service_connector":
                 _extract_service_connector(payload, asset)
+            elif asset_type == "resource":
+                asset.tables = _extract_reference_tables(payload)
 
             ns_blob = _ns_blob(doc, payload)
             is_process_root = lname(payload).lower() == "process"

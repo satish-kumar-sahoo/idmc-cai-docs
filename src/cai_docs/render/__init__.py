@@ -366,6 +366,7 @@ class VaultWriter:
                 temp_fields=a.temp_fields,
                 sql_blocks=a.sql_blocks,
                 connector_actions=a.connector_actions,
+                tables=a.tables,
                 connectors=connectors,
                 uses=uses,
                 used_by=used_by,

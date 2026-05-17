@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<collection_points xmlns:sg="http://informatica.com/ace/schema/saasglobal">
+    <sg:collectionPoint>
+        <sg:nmsc>TROM</sg:nmsc>
+        <sg:country>BG</sg:country>
+        <sg:brand>Toyota</sg:brand>
+        <sg:isValidationRequired>TRUE</sg:isValidationRequired>
+        <sg:collectionPointId>627e9a55-a31b-40e2-87bf-f0af7cdf5e61</sg:collectionPointId>
+        <sg:collectionPointName>TROM.BG - Toyota - Validated</sg:collectionPointName>
+    </sg:collectionPoint>
+    <sg:collectionPoint>
+        <sg:nmsc>TROM</sg:nmsc>
+        <sg:country>SI</sg:country>
+        <sg:brand>Lexus</sg:brand>
+        <sg:isValidationRequired>FALSE</sg:isValidationRequired>
+        <sg:collectionPointId>627e9a55-a31b-40e2-87bf-f0af7cdf5e62</sg:collectionPointId>
+        <sg:collectionPointName>TROM.SI - Lexus - Unvalidated</sg:collectionPointName>
+        <sg:apiToken>eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJsZWFrIn0.ZmFrZXNpZ25hdHVyZXh4</sg:apiToken>
+    </sg:collectionPoint>
+</collection_points>

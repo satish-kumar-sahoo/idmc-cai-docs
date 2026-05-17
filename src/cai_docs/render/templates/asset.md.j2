@@ -124,6 +124,17 @@
 
 {% for k, v in config.items() %}- **{{ k }}**: {{ v }}
 {% endfor %}{% endif %}
+{% if tables %}
+## Reference data
+
+{% for t in tables %}### {{ t.title }} ({{ t.rows|length }} row{{ '' if t.rows|length == 1 else 's' }})
+
+| {{ t.columns | join(' | ') }} |
+{{ ('| --- ' * (t.columns | length)) ~ '|' }}
+{% for row in t.rows %}| {{ row | map('replace', '|', '\\|') | join(' | ') }} |
+{% endfor %}
+
+{% endfor %}{% endif %}
 {% if sample_data %}
 ## Sample data
 {% if include_sample_data %}
