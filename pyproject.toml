@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cai-docs"
+version = "0.1.0"
+description = "Generate an Obsidian documentation vault from an Informatica CAI repository export"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "lxml>=5.0",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+cai-docs = "cai_docs.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cai_docs = ["render/templates/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

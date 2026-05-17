@@ -1,0 +1,30 @@
+---
+tags: [cai/home]
+---
+# {{ title }}
+
+Generated documentation for **{{ total }}** Informatica CAI asset(s).
+
+## Asset types
+
+{% for t, n in counts %}- [[_MOC {{ t }}]] — {{ n }}
+{% endfor %}
+
+## Classification confidence
+
+{% for bucket, n in confidence %}- {{ bucket }}: {{ n }}
+{% endfor %}
+
+{% if needs_review %}
+## Needs review ({{ needs_review|length }})
+
+{% for r in needs_review %}- [[{{ r }}]]
+{% endfor %}
+{% endif %}
+{% if dep_mermaid %}
+## Dependency overview
+
+```mermaid
+{{ dep_mermaid }}
+```
+{% endif %}

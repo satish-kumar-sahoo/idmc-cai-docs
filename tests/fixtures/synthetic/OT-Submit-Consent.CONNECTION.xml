@@ -1,0 +1,32 @@
+<aetgt:getResponse xmlns:aetgt="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd"
+                   xmlns:types1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd">
+   <types1:Item>
+      <types1:EntryId>CONN-001-2025::conn.xml</types1:EntryId>
+      <types1:Name>OT-Submit-Consent</types1:Name>
+      <types1:MimeType>application/xml+connection</types1:MimeType>
+      <types1:Description>App connection to OneTrust submit-consent</types1:Description>
+      <types1:VersionLabel>1.0</types1:VersionLabel>
+      <types1:State>CURRENT</types1:State>
+      <types1:CreatedBy>dev@example.com</types1:CreatedBy>
+      <types1:CreationDate>2025-01-12T10:00:00Z</types1:CreationDate>
+      <types1:ModifiedBy>dev@example.com</types1:ModifiedBy>
+      <types1:ModificationDate>2025-02-15T10:00:00Z</types1:ModificationDate>
+      <types1:PublicationStatus>published</types1:PublicationStatus>
+      <types1:PublishedContributionId>project:/spi.connections/OT-Submit-Consent.conn.xml</types1:PublishedContributionId>
+      <types1:Entry>
+         <connection xmlns="http://schemas.active-endpoints.com/appmodules/connection/2010/10/avosConnection.xsd"
+                     GUID="CONNGUID00000000000001"
+                     name="OT-Submit-Consent"
+                     connectorType="ServiceConnector">
+            <referencedServiceConnector>OT_Receive_Individual_Consent</referencedServiceConnector>
+            <properties>
+               <property name="baseUrl">https://onetrust.example.com</property>
+               <property name="authType">OAuth2</property>
+            </properties>
+         </connection>
+      </types1:Entry>
+      <types1:GUID>CONNGUID00000000000001</types1:GUID>
+      <types1:DisplayName>OT-Submit-Consent</types1:DisplayName>
+   </types1:Item>
+   <types1:CurrentServerDateTime>2025-02-15T10:01:00Z</types1:CurrentServerDateTime>
+</aetgt:getResponse>

@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Tooling / runtime
+.cache/
+.pytest_cache/
+.venv/
+venv/
+
+# Generated Obsidian vaults
+_vault/
+*-vault/
+CAI-Vault/

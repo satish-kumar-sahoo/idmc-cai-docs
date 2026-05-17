@@ -1,0 +1,107 @@
+{{ frontmatter }}
+# {{ title }}
+
+{% if needs_review %}> [!warning] Needs review
+> Low classification confidence ({{ '%.2f'|format(confidence) }}) or degraded extraction. Treat the detail below as best-effort.
+{% if notes %}{% for n in notes %}> - {{ n }}
+{% endfor %}{% endif %}
+{% endif %}
+## Summary
+
+{{ summary }}
+{% if llm_narrative %}
+> [!abstract] AI-generated overview
+> {{ llm_narrative | replace('\n', '\n> ') }}
+{% endif %}
+{% if mermaid %}
+## Flow
+
+```mermaid
+{{ mermaid }}
+```
+{% endif %}
+{% if inputs or outputs or temp_fields %}
+## Interface
+
+{% if inputs %}**Inputs**
+
+| name | type | required |
+|---|---|---|
+{% for f in inputs %}| {{ f.name }} | {{ f.type }} | {{ 'yes' if f.required else 'no' }} |
+{% endfor %}
+{% endif %}{% if outputs %}**Outputs**
+
+| name | type |
+|---|---|
+{% for f in outputs %}| {{ f.name }} | {{ f.type }} |
+{% endfor %}
+{% endif %}{% if temp_fields %}**Temp fields**
+
+| name | type | initial |
+|---|---|---|
+{% for f in temp_fields %}| {{ f.name }} | {{ f.type }} | {{ f.initial_value or '' }} |
+{% endfor %}
+{% endif %}{% endif %}
+{% if sql_blocks %}
+## SQL
+
+{% for b in sql_blocks %}**{{ b.context or b.service_name or 'query' }}**{% if b.connection %} — connection `{{ b.connection }}`{% endif %}
+
+{% if b.reconstructed %}Reconstructed (best-effort):
+
+```sql
+{{ b.reconstructed }}
+```
+{% endif %}Raw expression:
+
+```
+{{ b.raw_expression }}
+```
+
+{% endfor %}{% endif %}
+{% if connectors %}
+## Connector calls
+
+{% for c in connectors %}- {{ c }}
+{% endfor %}{% endif %}
+{% if uses %}
+## Uses
+
+{% for u in uses %}- {{ u }}
+{% endfor %}{% endif %}
+{% if used_by %}
+## Used by
+
+{% for u in used_by %}- {{ u }}
+{% endfor %}{% endif %}
+{% if expressions %}
+## Expressions
+
+{% for e in expressions %}- {% if e.target %}`{{ e.target }}` ⇐ {% endif %}({{ e.language }}) `{{ e.expression | replace('\n', ' ') | truncate(180) }}`
+{% endfor %}{% endif %}
+{% if config %}
+## Configuration
+
+{% for k, v in config.items() %}- **{{ k }}**: {{ v }}
+{% endfor %}{% endif %}
+{% if sample_data %}
+## Sample data
+{% if include_sample_data %}
+{% for s in sample_data %}**{{ s.name }}**
+
+```json
+{{ s.raw_json }}
+```
+
+{% endfor %}{% else %}
+_{{ sample_data|length }} sample payload(s) present; values redacted (run with `--include-sample-data` to emit)._
+
+{% for s in sample_data %}- **{{ s.name }}** — fields: {{ s.field_keys | join(', ') }}
+{% endfor %}{% endif %}{% endif %}
+{% if raw_dump %}
+## Raw structure (appendix)
+
+> [!note]- Flattened source elements ({{ raw_dump|length }})
+{% for path, val in raw_dump %}> - `{{ path }}` = {{ val | replace('\n',' ') | truncate(160) }}
+{% endfor %}
+{% endif %}

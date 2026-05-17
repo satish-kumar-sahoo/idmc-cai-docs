@@ -1,0 +1,9 @@
+---
+tags: [cai/moc]
+---
+# {{ title }}
+
+{{ count }} asset(s).
+
+{% for row in rows %}- [[{{ row.note }}]]{% if row.project %} — `{{ row.project }}`{% endif %}{% if row.needs_review %} ⚠️ needs-review{% endif %}
+{% endfor %}

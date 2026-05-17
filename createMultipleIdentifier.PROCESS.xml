@@ -1,0 +1,683 @@
+<aetgt:getResponse xmlns:aetgt="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd"
+                   xmlns:types1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd">
+   <types1:Item>
+      <types1:EntryId>wAQlBWlD2pHALVY-gt-2178235-2025-04-08T13:05:52.366Z::pd.xml</types1:EntryId>
+      <types1:Name>createMultipleIdentifier</types1:Name>
+      <types1:MimeType>application/xml+process</types1:MimeType>
+      <types1:Description/>
+      <types1:AppliesTo/>
+      <types1:Tags/>
+      <types1:VersionLabel>1.0</types1:VersionLabel>
+      <types1:State>CURRENT</types1:State>
+      <types1:ProcessGroup/>
+      <types1:CreatedBy>rohit.varshney@external.toyota-europe.com</types1:CreatedBy>
+      <types1:CreationDate>2025-04-08T13:05:52Z</types1:CreationDate>
+      <types1:ModifiedBy>reza.safarzade@external.toyota-europe.com</types1:ModifiedBy>
+      <types1:ModificationDate>2025-08-25T09:47:34Z</types1:ModificationDate>
+      <types1:PublicationStatus>published</types1:PublicationStatus>
+      <types1:PublishedBy>reza.safarzade@external.toyota-europe.com</types1:PublishedBy>
+      <types1:PublicationDate>2025-08-25T09:47:38Z</types1:PublicationDate>
+      <types1:PublishedContributionId>project:/spi.createMultipleIdentifier/createMultipleIdentifier.pd.xml</types1:PublishedContributionId>
+      <types1:Entry>
+         <process xmlns="http://schemas.active-endpoints.com/appmodules/screenflow/2010/10/avosScreenflow.xsd"
+                  xmlns:tfm="http://schemas.active-endpoints.com/appmodules/screenflow/2021/04/taskflowModel.xsd"
+                  xmlns:list="urn:activevos:spi:list:functions"
+                  GUID="7JToW2cvNHhkqxsrxQt7mT"
+                  displayName="createMultipleIdentifier"
+                  name="createMultipleIdentifier"
+                  overrideAPIName="false">
+            <parameterSet xmlns="http://schemas.active-endpoints.com/appmodules/screenflow/2021/04/taskflowModel.xsd"/>
+            <appliesTo/>
+            <description/>
+            <tags/>
+            <generator>Informatica Process Designer 11</generator>
+            <input>
+               <parameter description="" name="requestID" required="false" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+               <parameter description="" name="nmscCode" required="false" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+               <parameter description=""
+                          name="countryCode"
+                          required="false"
+                          type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+               <parameter description=""
+                          name="mdmCustomerID"
+                          required="false"
+                          type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+               <parameter description=""
+                          name="identifierType"
+                          required="false"
+                          type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+               <parameter description=""
+                          name="sourceSystemName"
+                          required="false"
+                          type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+               <parameter description="" name="customerID" required="false" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+               <parameter description="" name="identifier" required="false" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </parameter>
+            </input>
+            <output>
+               <field description="" name="output" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </field>
+            </output>
+            <tempFields>
+               <field description="" name="tmp_MDM_Id_Validation" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </field>
+               <field description="" name="tmp_CollectionPoint" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </field>
+               <field description="" name="tmp_validation_mdmCustomerID" type="string">
+                  <options>
+                     <option name="required">false</option>
+                  </options>
+               </field>
+               <field description="" name="tmp_isValidationRequired" type="string">
+                  <options>
+                     <option name="required">false</option>
+                     <option name="initialvalue">false</option>
+                  </options>
+               </field>
+               <field description="" name="tmp_Additional_IdentifierType" type="string">
+                  <options>
+                     <option name="required">false</option>
+                     <option name="initialvalue">convertedCustomerID</option>
+                  </options>
+               </field>
+               <field description="" name="tmp_brand" type="string">
+                  <options>
+                     <option name="required">false</option>
+                     <option name="initialvalue">TOYOTA</option>
+                  </options>
+               </field>
+               <field description="" name="temp_SC_Name" type="string">
+                  <options>
+                     <option name="required">false</option>
+                     <option name="initialvalue">ServiceConnector-OT-Submit-Consent</option>
+                  </options>
+               </field>
+               <field description="" name="tmp_mdm_id" type="string">
+                  <options>
+                     <option name="required">false</option>
+                     <option name="initialvalue">testingvalue</option>
+                  </options>
+               </field>
+            </tempFields>
+            <notes/>
+            <deployment skipIfRunning="false" suspendOnFault="false" tracingLevel="verbose">
+               <rest>
+                  <allowAnonymousAccess/>
+               </rest>
+            </deployment>
+            <extData>
+               <nvpair name="treatEmptyObjectListAsArray">true</nvpair>
+               <nvpair name="treatEmptyObjectListAsNotArray">false</nvpair>
+               <nvpair name="treatEmptyStringAsNull">true</nvpair>
+               <nvpair name="treatEmptyObjectListAsNotArray">false</nvpair>
+            </extData>
+            <flow id="rbee4b240-9864-449a-8b4a-8595e3136f93">
+               <start id="b5b723df9-b296-4f91-ace1-c0dedbf0fce3">
+                  <link id="i208eec17-f741-4567-ae66-71709cef8a3c"
+                        targetId="a17JToW2cvNHhkqxsrxQt7mT-Assignment3531c664-68b4-4dc0-b21a-41cda35fd550"/>
+               </start>
+               <assignment id="a17JToW2cvNHhkqxsrxQt7mT-Assignment3531c664-68b4-4dc0-b21a-41cda35fd550">
+                  <title>Assignment to tmp_validation_unifiedCustomerID</title>
+                  <operation source="formula" to="temp.tmp_validation_mdmCustomerID">
+                     <expression language="XQuery">util:iif(util:isNull( $input.mdmCustomerID ),'INVALID','VALID') </expression>
+                  </operation>
+                  <link id="o529aa593-49c2-495a-938f-8b81ae0450b5"
+                        targetId="a17JToW2cvNHhkqxsrxQt7mT-Subprocess222d52f0-8ab3-43df-8d9b-80e38dee071a"/>
+               </assignment>
+               <assignment id="a17JToW2cvNHhkqxsrxQt7mT-Assignmente3d04917-3861-4333-ba61-6283831760a4">
+                  <title>Assignment to tmp_MDM_Id_Validation</title>
+                  <operation source="formula" to="temp.tmp_MDM_Id_Validation">
+                     <expression language="XQuery">util:iif(util:isNull( $output.business_id ),'INVALID','VALID') </expression>
+                  </operation>
+                  <link id="ldbfa9105-67e3-42c7-9cfe-8f18c9c1f30e"
+                        targetId="a17JToW2cvNHhkqxsrxQt7mT-Decisiona68c636f-a776-4748-addb-7c750a96b3e4"/>
+               </assignment>
+               <eventContainer id="a17JToW2cvNHhkqxsrxQt7mT-Subprocess222d52f0-8ab3-43df-8d9b-80e38dee071a">
+                  <subflow id="n4252e1bc-5a01-4bef-bf40-a4fe80db0406">
+                     <title>Get Config</title>
+                     <subflowGUID>2Zf1IBmmkiQcZh0NmtUImO</subflowGUID>
+                     <subflowPath>GetConfiguration</subflowPath>
+                     <appliesTo/>
+                     <runForEach>false</runForEach>
+                     <input>
+                        <parameter name="name" source="constant" updatable="true">{$temp.temp_SC_Name}</parameter>
+                     </input>
+                     <outputDef>
+                        <field description="" name="url" type="string">
+                           <options>
+                              <option name="required">false</option>
+                           </options>
+                        </field>
+                        <field description="" name="organizationID" type="string">
+                           <options>
+                              <option name="required">false</option>
+                           </options>
+                        </field>
+                     </outputDef>
+                  </subflow>
+                  <flow id="i4d079541-5f86-4da0-bdd7-1019e1fd3e0a">
+                     <link id="bd24928e3-e423-4255-9577-a0700aa4e1f3"
+                           targetId="a17JToW2cvNHhkqxsrxQt7mT-Subprocess222d52f0-8ab3-43df-8d9b-80e38dee071a"
+                           type="containerLink"/>
+                  </flow>
+                  <flow id="s430fdfcb-128f-470f-9008-7f769a4163e5">
+                     <throw id="a17JToW2cvNHhkqxsrxQt7mT-Throw9dc4894f-4114-430c-9922-ea6274d43290">
+                        <title>Get Config Error</title>
+                        <throwInput>
+                           <parameter name="code" source="constant" updatable="true">{$output.faultInfo[1]/code}</parameter>
+                           <parameter name="detail" source="constant" updatable="true">{$output.faultInfo[1]/detail}</parameter>
+                           <parameter name="reason" source="constant" updatable="true">{$output.faultInfo[1]/reason}</parameter>
+                        </throwInput>
+                     </throw>
+                  </flow>
+                  <link id="q62f44e65-21d1-415a-b47b-9d266cca6b58"
+                        targetId="i4d079541-5f86-4da0-bdd7-1019e1fd3e0a"
+                        type="containerLink"/>
+                  <link id="x69086ba8-f5be-40b0-8126-30cdc35b09f1"
+                        targetId="a17JToW2cvNHhkqxsrxQt7mT-Decision2ec02a1c-71b0-4921-8fc7-d31ea9b432c0"/>
+                  <events>
+                     <catch faultField="faultInfo"
+                            id="e7b7294b1-3e79-42e8-9ce7-7210c0592bdf"
+                            interrupting="true">
+                        <link id="tbbcd58aa-50b2-4b85-bc01-4603743aeca8"
+                              targetId="s430fdfcb-128f-470f-9008-7f769a4163e5"
+                              type="containerLink"/>
+                     </catch>
+                  </events>
+               </eventContainer>
+               <eventContainer id="a17JToW2cvNHhkqxsrxQt7mT-Subprocessfc555ee8-b420-4125-94ab-e5a3b941e96b">
+                  <subflow id="o8452e396-ec90-4845-bd36-13c5b48e9acc">
+                     <title>GetMDMIDProcess</title>
+                     <subflowGUID>0sK8k757Eikl8JFY8ldHIX</subflowGUID>
+                     <subflowPath>GetMDMIDProcess</subflowPath>
+                     <appliesTo/>
+                     <runForEach>false</runForEach>
+                     <input>
+                        <parameter name="country_code" source="formula" updatable="true">
+                           <expression language="XQuery">fn:lower-case ($input.countryCode)</expression>
+                        </parameter>
+                        <parameter name="source_sytem" source="formula" updatable="true">
+                           <expression language="XQuery">fn:lower-case ($input.SourceSystemName)</expression>
+                        </parameter>
+                        <parameter name="nmsc_cde" source="formula" updatable="true">
+                           <expression language="XQuery">fn:lower-case ($input.nmscCode)</expression>
+                        </parameter>
+                        <parameter name="src_pk" source="constant" updatable="true">{$input.customerID}</parameter>
+                     </input>
+                     <outputDef>
+                        <field description="" name="business_id" type="string">
+                           <options>
+                              <option name="required">false</option>
+                           </options>
+                        </field>
+                        <field description="" name="source_primary_key" type="string">
+                           <options>
+                              <option name="required">false</option>
+                           </options>
+                        </field>
+                        <field description="" name="output_status" type="string">
+                           <options>
+                              <option name="required">false</option>
+                           </options>
+                        </field>
+                     </outputDef>
+                  </subflow>
+                  <flow id="u24a92a5d-2f85-4f1a-8a8f-a9fb8bbe76a9">
+                     <link id="t37376a02-1f8d-4ec0-99ce-180dc925127f"
+                           targetId="a17JToW2cvNHhkqxsrxQt7mT-Subprocessfc555ee8-b420-4125-94ab-e5a3b941e96b"
+                           type="containerLink"/>
+                  </flow>
+                  <flow id="d43776f22-453b-418c-b521-5a6d7075f068">
+                     <throw id="a17JToW2cvNHhkqxsrxQt7mT-Throw009338ce-3cd0-4173-b3f5-4a8848aa5e17">
+                        <title>MDM_Error</title>
+                        <throwInput>
+                           <parameter name="code" source="constant" updatable="true">{$output.mdm_faultInfo[1]/code}</parameter>
+                           <parameter name="detail" source="constant" updatable="true">{$output.mdm_faultInfo[1]/detail}</parameter>
+                           <parameter name="reason" source="constant" updatable="true">{$output.mdm_faultInfo[1]/reason}</parameter>
+                        </throwInput>
+                     </throw>
+                  </flow>
+                  <link id="va0552271-dcdb-4718-b44d-94505dada5de"
+                        targetId="u24a92a5d-2f85-4f1a-8a8f-a9fb8bbe76a9"
+                        type="containerLink"/>
+                  <link id="k047f9c58-5d92-485c-88c5-986f8001644a"
+                        targetId="a17JToW2cvNHhkqxsrxQt7mT-Assignmente3d04917-3861-4333-ba61-6283831760a4"/>
+                  <events>
+                     <catch faultField="mdm_faultInfo"
+                            id="c613b8f7f-bc56-43b3-a18d-a2b649a6c044"
+                            interrupting="true">
+                        <link id="c24fa8b15-6f7b-419b-9953-5513c8bbb50b"
+                              targetId="d43776f22-453b-418c-b521-5a6d7075f068"
+                              type="containerLink"/>
+                     </catch>
+                  </events>
+               </eventContainer>
+               <container id="a17JToW2cvNHhkqxsrxQt7mT-Decision2ec02a1c-71b0-4921-8fc7-d31ea9b432c0"
+                          type="exclusive">
+                  <title>tmp_validation_mdmCustomerID</title>
+                  <flow id="b05535c8e-3c0c-448a-ba6c-bf3cdb247f54">
+                     <jumpTo id="a17JToW2cvNHhkqxsrxQt7mT-Jump44a293d7-3ec3-421d-b8cb-2d4d19016f03">
+                        <link id="a77a81dbb-0383-4059-bc9c-f7577ca9ce47"
+                              targetId="a17JToW2cvNHhkqxsrxQt7mT-Subprocess3b295f04-b559-46e2-adb3-907b72d7b6fb"/>
+                     </jumpTo>
+                  </flow>
+                  <flow id="vb21cb29d-11eb-4e42-967d-5be272d858ab">
+                     <link id="n08ed86db-8ad8-407e-9456-89eaa2f777fc"
+                           targetId="a17JToW2cvNHhkqxsrxQt7mT-Decision2ec02a1c-71b0-4921-8fc7-d31ea9b432c0"
+                           type="containerLink"/>
+                  </flow>
+                  <link id="i409ff22b-46c2-4a13-83ac-dac6c599d215"
+                        targetId="b05535c8e-3c0c-448a-ba6c-bf3cdb247f54"
+                        type="containerLink">
+                     <condition source="formula">
+                        <function name="string-equals">
+                           <arg name="left">{$temp.tmp_validation_mdmCustomerID}</arg>
+                           <arg name="right">VALID</arg>
+                        </function>
+                     </condition>
+                  </link>
+                  <link id="re352c0a1-006c-446c-9a4f-d96961734593"
+                        targetId="vb21cb29d-11eb-4e42-967d-5be272d858ab"
+                        type="containerLink"/>
+                  <link id="k05c85696-9237-471b-bd3f-1bde149ed56c"
+                        targetId="a17JToW2cvNHhkqxsrxQt7mT-Subprocessfc555ee8-b420-4125-94ab-e5a3b941e96b"/>
+               </container>
+               <container id="a17JToW2cvNHhkqxsrxQt7mT-Decisiona68c636f-a776-4748-addb-7c750a96b3e4"
+                          type="exclusive">
+                  <title>tmp_MDM_Id_Validation</title>
+                  <flow id="k3960ca61-04e1-4165-b529-7049bd50bea0">
+                     <subflow id="a17JToW2cvNHhkqxsrxQt7mT-Subprocess3b295f04-b559-46e2-adb3-907b72d7b6fb">
+                        <title>GetCollectionPoint</title>
+                        <subflowGUID>8ETedhAycxaeWe1diMeYO4</subflowGUID>
+                        <subflowPath>GetCollectionPoint</subflowPath>
+                        <appliesTo/>
+                        <runForEach>false</runForEach>
+                        <input>
+                           <parameter name="nmsc" source="constant" updatable="true">{$input.nmscCode}</parameter>
+                           <parameter name="country" source="constant" updatable="true">{$input.countryCode}</parameter>
+                           <parameter name="brand" source="constant" updatable="true">{$temp.tmp_brand}</parameter>
+                           <parameter name="isvalidationRequired" source="constant" updatable="true">{$temp.tmp_isValidationRequired}</parameter>
+                        </input>
+                        <outputDef>
+                           <field description="" name="collectionPointId" type="string">
+                              <options>
+                                 <option name="required">false</option>
+                              </options>
+                           </field>
+                           <field description="" name="collectionPointToken" type="string">
+                              <options>
+                                 <option name="required">false</option>
+                              </options>
+                           </field>
+                        </outputDef>
+                        <link id="fc1a70827-66e4-457c-a63c-1ad38fe7abe5"
+                              targetId="a17JToW2cvNHhkqxsrxQt7mT-Decision49c1c9d5-f5d1-48ae-8b90-54d0730333a0"/>
+                     </subflow>
+                     <container id="a17JToW2cvNHhkqxsrxQt7mT-Decision49c1c9d5-f5d1-48ae-8b90-54d0730333a0"
+                                type="exclusive">
+                        <title>Localized_Id_Decision</title>
+                        <flow id="c13d8113f-4ccd-4f9a-89c2-4a7631483f4c">
+                           <jumpTo id="a17JToW2cvNHhkqxsrxQt7mT-Jump97942ef0-b45a-48e4-ae22-f7b909dae1ba">
+                              <link id="l602d48bc-1bd2-4322-8096-c49a48e08377"
+                                    targetId="a17JToW2cvNHhkqxsrxQt7mT-Service54ac9f7e-6c2c-4284-a6ac-21e3835470c8"/>
+                           </jumpTo>
+                        </flow>
+                        <flow id="y909ef3db-4064-419a-b6d3-a63761577835">
+                           <eventContainer id="a17JToW2cvNHhkqxsrxQt7mT-Subprocess8275cc21-cbc3-4cb6-9bf3-05e69aa72d84">
+                              <subflow id="m080ebd9c-91c1-49ac-9bfb-f4c3bd9dec6b">
+                                 <title>BuildLocalizedId</title>
+                                 <subflowGUID>6WAjTPVYl4Pi3XNAg2ZvIo</subflowGUID>
+                                 <subflowPath>BuildLocalizedId</subflowPath>
+                                 <appliesTo/>
+                                 <runForEach>false</runForEach>
+                                 <input>
+                                    <parameter name="nmscCode" source="constant" updatable="true">{$input.nmscCode}</parameter>
+                                    <parameter name="countryCode" source="constant" updatable="true">{$input.countryCode}</parameter>
+                                    <parameter name="sourceSystemName" source="constant" updatable="true">{$input.sourceSystemName}</parameter>
+                                    <parameter name="customerId" source="constant" updatable="true">{$input.customerID}</parameter>
+                                 </input>
+                                 <outputDef>
+                                    <field description="" name="LocalizedId" type="string">
+                                       <options>
+                                          <option name="required">false</option>
+                                       </options>
+                                    </field>
+                                 </outputDef>
+                              </subflow>
+                              <flow id="le283501d-acb3-4b5e-ac2f-e5f5cfb06923">
+                                 <link id="q28c3931d-19b6-40b9-917f-4945a92b06f4"
+                                       targetId="a17JToW2cvNHhkqxsrxQt7mT-Subprocess8275cc21-cbc3-4cb6-9bf3-05e69aa72d84"
+                                       type="containerLink"/>
+                              </flow>
+                              <flow id="cbdb04348-6f3f-4e3b-8818-acd8ad00c48b">
+                                 <throw id="a17JToW2cvNHhkqxsrxQt7mT-Throwc5c1ac3b-4897-4a0e-a542-2fc711fb2c5b">
+                                    <title>local_id_error</title>
+                                    <throwInput>
+                                       <parameter name="code" source="constant" updatable="true">{$output.build_faultInfo[1]/code}</parameter>
+                                       <parameter name="detail" source="constant" updatable="true">{$output.build_faultInfo[1]/detail}</parameter>
+                                       <parameter name="reason" source="constant" updatable="true">{$output.build_faultInfo[1]/reason}</parameter>
+                                    </throwInput>
+                                 </throw>
+                              </flow>
+                              <link id="pf6909e81-6b00-49e6-af77-c1d24a2892b9"
+                                    targetId="le283501d-acb3-4b5e-ac2f-e5f5cfb06923"
+                                    type="containerLink"/>
+                              <link id="pd923f6ee-a91c-4f3f-bca5-e4221b13727b"
+                                    targetId="a17JToW2cvNHhkqxsrxQt7mT-Service54ac9f7e-6c2c-4284-a6ac-21e3835470c8"/>
+                              <events>
+                                 <catch faultField="build_faultInfo"
+                                        id="m74f64904-f732-4302-9701-d62cc5223426"
+                                        interrupting="true">
+                                    <link id="ja3e428c2-8cd8-49bf-8091-3f700c412903"
+                                          targetId="cbdb04348-6f3f-4e3b-8818-acd8ad00c48b"
+                                          type="containerLink"/>
+                                 </catch>
+                              </events>
+                           </eventContainer>
+                           <service id="a17JToW2cvNHhkqxsrxQt7mT-Service54ac9f7e-6c2c-4284-a6ac-21e3835470c8">
+                              <title>Create Multiple Identifiers</title>
+                              <serviceName>AppConnection-OT-Submit-Consent:Create Multiple Identifiers</serviceName>
+                              <serviceGUID>7PQKmR7TlxKk3xVQOFJVgu</serviceGUID>
+                              <serviceInput>
+                                 <parameter name="identifier" source="formula">
+                                    <expression language="XQuery">util:iif( util:isNull( $input.mdmCustomerID ) , $output.business_id , $input.mdmCustomerID )</expression>
+                                 </parameter>
+                                 <parameter name="requestInformation" source="constant">{$output.collectionPointToken}</parameter>
+                                 <parameter name="additionalIdentifier" source="constant">{$output.LocalizedId}</parameter>
+                                 <parameter name="identifierType" source="constant">{$temp.tmp_Additional_IdentifierType}</parameter>
+                                 <parameter name="OneTrustURL" source="constant">{$output.url}</parameter>
+                              </serviceInput>
+                              <link id="ud6ba2fab-a0d0-44cd-af66-605ef1d913cb"
+                                    targetId="a17JToW2cvNHhkqxsrxQt7mT-Assignment92bb38bd-f0ce-45cf-b000-b1ae86aae0cb"/>
+                           </service>
+                           <assignment id="a17JToW2cvNHhkqxsrxQt7mT-Assignment92bb38bd-f0ce-45cf-b000-b1ae86aae0cb">
+                              <title>Assignment to output</title>
+                              <operation source="constant" to="output.output">{$output.response}</operation>
+                              <link id="b84f7c0df-f77c-4e06-b415-b9b7d049e93f"
+                                    targetId="a17JToW2cvNHhkqxsrxQt7mT-End5e4f8d0d-bc0f-47e5-9db7-ee3fad64b9d4"/>
+                           </assignment>
+                           <end id="a17JToW2cvNHhkqxsrxQt7mT-End5e4f8d0d-bc0f-47e5-9db7-ee3fad64b9d4">
+                              <title>End 1</title>
+                           </end>
+                        </flow>
+                        <link id="ld4a9d08c-3d30-44ce-87c5-4eae7ca3c062"
+                              targetId="c13d8113f-4ccd-4f9a-89c2-4a7631483f4c"
+                              type="containerLink">
+                           <condition source="formula">
+                              <function name="string-equals">
+                                 <arg name="left">{$input.SourceSystemName}</arg>
+                                 <arg name="right">dynamics</arg>
+                              </function>
+                           </condition>
+                        </link>
+                        <link id="v0390dfae-e03c-4679-9969-9f6900ee7e27"
+                              targetId="y909ef3db-4064-419a-b6d3-a63761577835"
+                              type="containerLink"/>
+                     </container>
+                  </flow>
+                  <flow id="i27802e84-5794-4c39-88e4-1295b787c2fb">
+                     <service id="a17JToW2cvNHhkqxsrxQt7mT-Servicef759c795-19da-4cd8-a0a9-f8fd37ec52b3">
+                        <title>Database_Entry</title>
+                        <serviceName>AppConnection-DASSQLServer-createmultipleidentifier:SQL DB Query Execution</serviceName>
+                        <serviceGUID>5APYoybRzWRhM55dcJuQi0</serviceGUID>
+                        <serviceInput>
+                           <parameter name="Query" source="formula">
+                              <expression language="XQuery">'INSERT INTO integration_layer.consent_data_events (mdm_customer_id, nmsc_code, country_code, source_system_name, customer_id, identifier_type, identifier, failed, processed, status) VALUES ('||"'"|| '' ||"'"||','||"'"|| $input.nmscCode||"'"||','||"'"|| $input.countryCode||"'"||','||"'"|| $input.sourceSystemName||"'"||','||"'"||$input.customerID||"'"||','||"'"|| $input.identifierType||"'"||','||"'"||$input.identifier||"'"||','||'1'||','||'0'||','||"'"||'failed'||"'"||')'</expression>
+                           </parameter>
+                        </serviceInput>
+                        <link id="pe0e5fcbb-2c96-4526-816d-51bff1e90abe"
+                              targetId="a17JToW2cvNHhkqxsrxQt7mT-End8d8c127d-ba88-4f96-af9f-562e3cc672bc"/>
+                     </service>
+                     <end id="a17JToW2cvNHhkqxsrxQt7mT-End8d8c127d-ba88-4f96-af9f-562e3cc672bc">
+                        <title>Entry_Made</title>
+                     </end>
+                  </flow>
+                  <link id="p5c52d763-ba3d-41f9-8c63-1008f2d2e892"
+                        targetId="k3960ca61-04e1-4165-b529-7049bd50bea0"
+                        type="containerLink">
+                     <condition source="formula">
+                        <function name="string-equals">
+                           <arg name="left">{$temp.tmp_MDM_Id_Validation}</arg>
+                           <arg name="right">VALID</arg>
+                        </function>
+                     </condition>
+                  </link>
+                  <link id="x08e7cd6e-56f7-4774-8db4-387ae5923161"
+                        targetId="i27802e84-5794-4c39-88e4-1295b787c2fb"
+                        type="containerLink"/>
+               </container>
+            </flow>
+         </process>
+         <ns1:sample-data-sets xmlns:ns1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/sampleData.xsd">
+            <ns1:SampleData>
+               <ns1:Id>75930635-f275-47a2-98ed-7102713f1f82</ns1:Id>
+               <ns1:Name>123235476</ns1:Name>
+               <ns1:CreatedBy>reza.safarzade@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-07-30T13:13:58Z</ns1:CreationDate>
+               <ns1:ModifiedBy>rohit.varshney@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-08-05T10:42:52Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "c1bd3486-c20a-516e-b075-ca46e1bb6900:56e788a9-a790-4b5b-9eda-d1d49b34eb04",
+    "nmscCode": "TSW",
+    "countryCode": "SE",
+    "mdmCustomerID": "kjsdhjgs1009",
+    "identifierType": "portal",
+    "SourceSystemName": "app",
+    "customerID": "kjsdhjgs1009",
+    "identifier": "[TSW][SE][app][kjsdhjgs1009]"
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>bfcff6fe-5a2d-47d0-a669-647b12439bdb</ns1:Id>
+               <ns1:Name>123456</ns1:Name>
+               <ns1:CreatedBy>reza.safarzade@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-07-30T13:13:50Z</ns1:CreationDate>
+               <ns1:ModifiedBy>reza.safarzade@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-07-30T13:13:50Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "001",
+    "nmscCode": "TSW",
+    "countryCode": "SE",
+    "mdmCustomerID": "4600000000000202507160055",
+    "identifierType": "convertedCustomerID",
+    "SourceSystemName": "MSD",
+    "customerID": "4600000000000202507160005"
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>ed4b7775-40bb-4677-9456-b4e8e9bb9f35</ns1:Id>
+               <ns1:Name>KTSession001</ns1:Name>
+               <ns1:CreatedBy>reza.safarzade@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-08-25T09:22:07Z</ns1:CreationDate>
+               <ns1:ModifiedBy>reza.safarzade@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-08-25T09:24:08Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "1234",
+    "nmscCode": "TBU",
+    "countryCode": "BG",
+    "mdmCustomerID": "MDMCustomerIDKTSessionReza001",
+    "identifierType": "convertedCustomerID",
+    "sourceSystemName": "MSD",
+    "customerID": "TESINGREZACMIProcess002",
+    "identifier": "[TBU][BG][MSD][TESINGREZACMIProcess002]"
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>365f2291-05c9-46a9-b459-135f8355787e</ns1:Id>
+               <ns1:Name>new12345</ns1:Name>
+               <ns1:CreatedBy>reza.safarzade@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-07-10T10:20:12Z</ns1:CreationDate>
+               <ns1:ModifiedBy>reza.safarzade@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-07-10T10:20:12Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "",
+    "nmscCode": "",
+    "countryCode": "",
+    "mdmCustomerID": "",
+    "identifierType": "",
+    "SourceSystemName": "",
+    "customerID": "",
+    "identifier": ""
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>b7f697a8-a48a-43c5-9f67-017a5fcbff8f</ns1:Id>
+               <ns1:Name>newwithDAS</ns1:Name>
+               <ns1:CreatedBy>reza.safarzade@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-08-05T11:38:35Z</ns1:CreationDate>
+               <ns1:ModifiedBy>reza.safarzade@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-08-05T11:43:08Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "001",
+    "nmscCode": "TBU",
+    "countryCode": "BG",
+    "mdmCustomerID": "",
+    "identifierType": "convertedCustomerID",
+    "SourceSystemName": "MSD",
+    "customerID": "TESTINGNEWPAYLOADREZA012",
+    "identifier": "[TSW][SE][MSD][TESTINGNEWPAYLOADREZA012]"
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>588430c5-a9a0-4f28-b24c-39c7291a744d</ns1:Id>
+               <ns1:Name>New_input_testing</ns1:Name>
+               <ns1:CreatedBy>rohit.varshney@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-06-16T08:56:51Z</ns1:CreationDate>
+               <ns1:ModifiedBy>rohit.varshney@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-07-16T15:47:47Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "001",
+    "nmscCode": "TSW",
+    "countryCode": "SE",
+    "mdmCustomerID": "4600000000000202507160055",
+    "identifierType": "convertedCustomerID",
+    "SourceSystemName": "MSD",
+    "customerID": "4600000000000202507160005"
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>13555829-3e70-46a9-8778-1f6eefb0f0a2</ns1:Id>
+               <ns1:Name>Table_Testing</ns1:Name>
+               <ns1:CreatedBy>rohit.varshney@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-05-29T12:45:22Z</ns1:CreationDate>
+               <ns1:ModifiedBy>rohit.varshney@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-06-09T11:39:30Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "1234",
+    "nmscCode": "TBU",
+    "countryCode": "BG",
+    "brand": "Lexus",
+    "isValidationRequired": "true",
+    "mdmCustomerID": "",
+    "additionalIdentifier": "[TBU][BG][MSD][TESTINGCUSTOMERFORROHIT]",
+    "identifierType": "convertedCustomerID",
+    "SourceSystemName": "MSD",
+    "customerID": "1234"
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>5efb4251-4b1a-4e65-a70a-bf633727cb2c</ns1:Id>
+               <ns1:Name>test1</ns1:Name>
+               <ns1:CreatedBy>reza.safarzade@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-04-09T13:16:29Z</ns1:CreationDate>
+               <ns1:ModifiedBy>rohit.varshney@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-06-03T13:36:14Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "1234",
+    "nmscCode": "TBU",
+    "countryCode": "BG",
+    "brand": "Toyota",
+    "isValidationRequired": "",
+    "unifiedCustomerId": "",
+    "portal": "testportal1234567",
+    "dynamics": "testdynamics123456qw",
+    "sourceId": "testsourceId1234",
+    "SourceSystemName": "MSD",
+    "customerID": "46f80d3c-30bd-ef11-b8e8-6045bda21648"
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>c9aac36c-f8ca-4c7e-9ee2-6908b8c8c7ee</ns1:Id>
+               <ns1:Name>test2</ns1:Name>
+               <ns1:CreatedBy>reza.safarzade@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-04-11T12:35:01Z</ns1:CreationDate>
+               <ns1:ModifiedBy>rohit.varshney@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-06-03T13:36:14Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "",
+    "nmscCode": "",
+    "countryCode": "",
+    "brand": "",
+    "isValidationRequired": "",
+    "unifiedCustomerId": "",
+    "identifier": "",
+    "identifierType": "",
+    "SourceSystemName": "",
+    "customerID": ""
+}</ns1:Data>
+            </ns1:SampleData>
+            <ns1:SampleData>
+               <ns1:Id>201c59da-d8d8-45cb-907b-f65e611cc8f9</ns1:Id>
+               <ns1:Name>updated_database_query</ns1:Name>
+               <ns1:CreatedBy>rohit.varshney@external.toyota-europe.com</ns1:CreatedBy>
+               <ns1:CreationDate>2025-07-10T10:53:33Z</ns1:CreationDate>
+               <ns1:ModifiedBy>rohit.varshney@external.toyota-europe.com</ns1:ModifiedBy>
+               <ns1:ModificationDate>2025-08-05T16:23:57Z</ns1:ModificationDate>
+               <ns1:Data format="json">{
+    "RequestId": "20250710001",
+    "nmscCode": "TBU",
+    "countryCode": "BG",
+    "mdmCustomerID": "359000000000000001200710",
+    "identifierType": "convertedCutomerID",
+    "SourceSystemName": "MSD",
+    "customerID": "359000000000000001200710",
+    "identifier": "359000000000000001200710"
+}</ns1:Data>
+            </ns1:SampleData>
+         </ns1:sample-data-sets>
+      </types1:Entry>
+      <types1:GUID>7JToW2cvNHhkqxsrxQt7mT</types1:GUID>
+      <types1:DisplayName>createMultipleIdentifier</types1:DisplayName>
+   </types1:Item>
+   <types1:CurrentServerDateTime>2025-08-25T11:31:10.292Z</types1:CurrentServerDateTime>
+</aetgt:getResponse>

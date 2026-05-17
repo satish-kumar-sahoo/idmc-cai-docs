@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gizmo:widget xmlns:gizmo="urn:acme:gizmo:9000" version="42">
+   <gizmo:doodad spin="left">
+      <gizmo:sprocket teeth="17"/>
+      <gizmo:note>This intentionally matches no known Informatica asset schema.</gizmo:note>
+   </gizmo:doodad>
+   <gizmo:payload format="weird">SELECT should_not_be_misread FROM nowhere</gizmo:payload>
+</gizmo:widget>

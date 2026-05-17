@@ -1,0 +1,29 @@
+<aetgt:getResponse xmlns:aetgt="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd"
+                   xmlns:types1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd">
+   <types1:Item>
+      <types1:EntryId>GD-001-2025::gd.xml</types1:EntryId>
+      <types1:Name>ConsentGuide</types1:Name>
+      <types1:MimeType>application/xml+guide</types1:MimeType>
+      <types1:Description>Guided UI for capturing consent</types1:Description>
+      <types1:VersionLabel>1.0</types1:VersionLabel>
+      <types1:State>CURRENT</types1:State>
+      <types1:CreatedBy>dev@example.com</types1:CreatedBy>
+      <types1:CreationDate>2025-01-06T10:00:00Z</types1:CreationDate>
+      <types1:ModifiedBy>dev@example.com</types1:ModifiedBy>
+      <types1:ModificationDate>2025-01-22T10:00:00Z</types1:ModificationDate>
+      <types1:PublicationStatus>published</types1:PublicationStatus>
+      <types1:PublishedContributionId>project:/spi.guides/ConsentGuide.gd.xml</types1:PublishedContributionId>
+      <types1:Entry>
+         <guide xmlns="http://schemas.active-endpoints.com/appmodules/screenflow/2010/10/avosGuide.xsd"
+                GUID="GDGUID0000000000000001"
+                name="ConsentGuide">
+            <screen name="Welcome"/>
+            <screen name="Collect Consent"/>
+            <invokeProcess subflowPath="retrieveconsents"/>
+         </guide>
+      </types1:Entry>
+      <types1:GUID>GDGUID0000000000000001</types1:GUID>
+      <types1:DisplayName>ConsentGuide</types1:DisplayName>
+   </types1:Item>
+   <types1:CurrentServerDateTime>2025-01-22T10:01:00Z</types1:CurrentServerDateTime>
+</aetgt:getResponse>

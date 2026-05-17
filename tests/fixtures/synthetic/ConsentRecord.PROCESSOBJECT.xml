@@ -1,0 +1,29 @@
+<aetgt:getResponse xmlns:aetgt="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd"
+                   xmlns:types1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd">
+   <types1:Item>
+      <types1:EntryId>PO-001-2025::po.xml</types1:EntryId>
+      <types1:Name>ConsentRecord</types1:Name>
+      <types1:MimeType>application/xml+processobject</types1:MimeType>
+      <types1:Description>Canonical consent record</types1:Description>
+      <types1:VersionLabel>1.0</types1:VersionLabel>
+      <types1:State>CURRENT</types1:State>
+      <types1:CreatedBy>dev@example.com</types1:CreatedBy>
+      <types1:CreationDate>2025-01-05T10:00:00Z</types1:CreationDate>
+      <types1:ModifiedBy>dev@example.com</types1:ModifiedBy>
+      <types1:ModificationDate>2025-01-20T10:00:00Z</types1:ModificationDate>
+      <types1:PublicationStatus>published</types1:PublicationStatus>
+      <types1:PublishedContributionId>project:/spi.objects/ConsentRecord.po.xml</types1:PublishedContributionId>
+      <types1:Entry>
+         <processObject xmlns="http://schemas.active-endpoints.com/appmodules/screenflow/2010/10/avosProcessObject.xsd"
+                        GUID="POGUID0000000000000001"
+                        name="ConsentRecord">
+            <field name="mdmCustomerID" type="string"/>
+            <field name="brand" type="string"/>
+            <field name="purposes" type="xml"/>
+         </processObject>
+      </types1:Entry>
+      <types1:GUID>POGUID0000000000000001</types1:GUID>
+      <types1:DisplayName>ConsentRecord</types1:DisplayName>
+   </types1:Item>
+   <types1:CurrentServerDateTime>2025-01-20T10:01:00Z</types1:CurrentServerDateTime>
+</aetgt:getResponse>

@@ -1,0 +1,36 @@
+<aetgt:getResponse xmlns:aetgt="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd"
+                   xmlns:types1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd">
+   <types1:Item>
+      <types1:EntryId>SC-001-2025::sc.xml</types1:EntryId>
+      <types1:Name>OT_Receive_Individual_Consent</types1:Name>
+      <types1:MimeType>application/xml+serviceconnector</types1:MimeType>
+      <types1:Description>OneTrust receive-consent REST connector</types1:Description>
+      <types1:VersionLabel>1.0</types1:VersionLabel>
+      <types1:State>CURRENT</types1:State>
+      <types1:CreatedBy>dev@example.com</types1:CreatedBy>
+      <types1:CreationDate>2025-01-10T10:00:00Z</types1:CreationDate>
+      <types1:ModifiedBy>dev@example.com</types1:ModifiedBy>
+      <types1:ModificationDate>2025-03-01T10:00:00Z</types1:ModificationDate>
+      <types1:PublicationStatus>published</types1:PublicationStatus>
+      <types1:PublishedContributionId>project:/spi.connectors/OT_Receive_Individual_Consent.sc.xml</types1:PublishedContributionId>
+      <types1:Entry>
+         <serviceConnector xmlns="http://schemas.active-endpoints.com/appmodules/serviceconnector/2010/10/avosServiceConnector.xsd"
+                           GUID="SCGUID000000000000001"
+                           name="OT_Receive_Individual_Consent">
+            <connectionProperties>
+               <property name="baseUrl" type="string"/>
+            </connectionProperties>
+            <actions>
+               <action name="Receive Consent from One Trust">
+                  <binding>
+                     <httpRequest method="GET" url="{baseUrl}/consent/v4/individual"/>
+                  </binding>
+               </action>
+            </actions>
+         </serviceConnector>
+      </types1:Entry>
+      <types1:GUID>SCGUID000000000000001</types1:GUID>
+      <types1:DisplayName>OT_Receive_Individual_Consent</types1:DisplayName>
+   </types1:Item>
+   <types1:CurrentServerDateTime>2025-03-01T10:01:00Z</types1:CurrentServerDateTime>
+</aetgt:getResponse>
