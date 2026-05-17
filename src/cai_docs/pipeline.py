@@ -11,6 +11,7 @@ from .graph import build_graph
 from .ingest import discover
 from .models import RunReport
 from .render import VaultWriter
+from .verify import verify_vault
 from .extract import merge_pdd
 from .sidecar import (
     apply_sidecar,
@@ -71,4 +72,7 @@ def run(config: Config) -> RunReport:
 
     describe_assets(assets, graph, config, report)
     VaultWriter(config).write(graph, report)
+
+    # post-render verification: every generated Mermaid diagram must be valid
+    report.mermaid_blocks, report.mermaid_issues = verify_vault(config.output_dir)
     return report

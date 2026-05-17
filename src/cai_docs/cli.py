@@ -77,6 +77,12 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nvault written to: {config.output_dir}")
     if not config.llm_enabled and config.use_llm:
         print("(AI enrichment skipped — not logged in to Claude)")
+    if report.mermaid_issues:
+        print(
+            f"\nwarning: {len(report.mermaid_issues)} Mermaid diagram issue(s) "
+            "detected — see the run report above.",
+            file=sys.stderr,
+        )
     return 0
 
 

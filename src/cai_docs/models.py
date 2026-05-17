@@ -245,6 +245,8 @@ class RunReport:
     llm_cache_hits: int = 0
     files_seen: int = 0
     files_parsed: int = 0
+    mermaid_blocks: int = 0
+    mermaid_issues: list[str] = field(default_factory=list)
 
     def render(self) -> str:
         lines = ["cai-docs run report", "-" * 40]
@@ -256,4 +258,10 @@ class RunReport:
         lines.append(f"confidence          : {dict(sorted(self.confidence_buckets.items()))}")
         lines.append(f"unresolved refs     : {self.unresolved_references}")
         lines.append(f"llm calls / cached  : {self.llm_calls} / {self.llm_cache_hits}")
+        status = "OK" if not self.mermaid_issues else f"{len(self.mermaid_issues)} ISSUE(S)"
+        lines.append(f"mermaid diagrams    : {self.mermaid_blocks} ({status})")
+        for msg in self.mermaid_issues[:20]:
+            lines.append(f"  ! {msg}")
+        if len(self.mermaid_issues) > 20:
+            lines.append(f"  ... and {len(self.mermaid_issues) - 20} more")
         return "\n".join(lines)
