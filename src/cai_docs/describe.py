@@ -128,7 +128,13 @@ def _call_llm(prompt: str, config: Config) -> str:
     """Isolated so tests can monkeypatch it. Real Anthropic call otherwise."""
     import anthropic  # lazy: optional dependency
 
-    client = anthropic.Anthropic(api_key=config.anthropic_api_key)
+    auth = config.auth
+    if auth is None:
+        raise RuntimeError("not authenticated")
+    if auth.kind == "oauth":
+        client = anthropic.Anthropic(auth_token=auth.token)
+    else:
+        client = anthropic.Anthropic(api_key=auth.token)
     resp = client.messages.create(
         model=config.model,
         max_tokens=400,

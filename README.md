@@ -61,7 +61,7 @@ Options:
 
 | flag | default | meaning |
 |---|---|---|
-| `--no-llm` | LLM on if key set | static extraction only |
+| `--no-llm` | LLM on if logged in | static extraction only |
 | `--model` | `claude-opus-4-7` | Anthropic model id |
 | `--max-workers` | `4` | LLM concurrency |
 | `--confidence-threshold` | `0.45` | below this → `needs-review` |
@@ -78,9 +78,18 @@ Open the output folder as an Obsidian vault.
 
 ## LLM enrichment (optional)
 
-If `ANTHROPIC_API_KEY` is set and `--no-llm` is not passed, each asset also gets
-a short prose overview from Claude. Responses are content-hash cached so re-runs
-are cheap and deterministic. The tool is fully functional without it.
+If you are **logged in to Claude** and `--no-llm` is not passed, each asset also
+gets a short prose overview from Claude. Log in once with the Claude CLI:
+
+```bash
+claude login          # or: claude setup-token
+```
+
+`cai-docs` reuses that login (the OAuth credentials at
+`~/.claude/.credentials.json`); no API key to manage. If you are not logged in
+it prints a reminder and continues with static extraction only. An
+`ANTHROPIC_API_KEY` environment variable is still honoured as a fallback.
+Responses are content-hash cached so re-runs are cheap and deterministic.
 
 **Privacy:** secrets in configuration are redacted and `sample-data` payloads
 are never sent to the model. Raw sample payloads are kept out of the vault

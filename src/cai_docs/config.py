@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from pathlib import Path
+
+from .auth import ClaudeAuth, resolve_auth
 
 
 @dataclass
@@ -13,7 +14,7 @@ class Config:
     output_dir: Path
 
     # LLM enrichment
-    use_llm: bool = True  # only takes effect if an API key is present
+    use_llm: bool = True  # only takes effect if the user is logged in to Claude
     model: str = "claude-opus-4-7"
     max_workers: int = 4
     cache_dir: Path = Path(".cache/cai-docs")
@@ -25,9 +26,9 @@ class Config:
     include_sample_data: bool = False  # raw sample payloads are PII; off by default
 
     @property
-    def anthropic_api_key(self) -> str | None:
-        return os.environ.get("ANTHROPIC_API_KEY") or None
+    def auth(self) -> ClaudeAuth | None:
+        return resolve_auth()
 
     @property
     def llm_enabled(self) -> bool:
-        return self.use_llm and bool(self.anthropic_api_key)
+        return self.use_llm and self.auth is not None

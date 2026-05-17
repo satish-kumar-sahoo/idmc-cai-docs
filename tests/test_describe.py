@@ -1,7 +1,9 @@
 import json
 from pathlib import Path
 
+from cai_docs import config as config_mod
 from cai_docs import describe
+from cai_docs.auth import ClaudeAuth
 from cai_docs.classify import classify
 from cai_docs.config import Config
 from cai_docs.describe import _redacted_payload, describe_assets, static_summary
@@ -17,6 +19,11 @@ def _asset(raw):
     return extract(doc, at, conf, sig)
 
 
+def _set_login(monkeypatch, auth):
+    """Force config's auth resolution deterministically (logged-in or not)."""
+    monkeypatch.setattr(config_mod, "resolve_auth", lambda: auth)
+
+
 def test_static_summary_always_present(real_create):
     a = _asset(real_create)
     g = build_graph([a])
@@ -26,11 +33,12 @@ def test_static_summary_always_present(real_create):
     assert "SQL" in s
 
 
-def test_no_llm_when_disabled(real_create, tmp_path, monkeypatch):
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+def test_no_llm_when_not_logged_in(real_create, tmp_path, monkeypatch):
+    _set_login(monkeypatch, None)  # not logged in, no env key
     a = _asset(real_create)
     g = build_graph([a])
     cfg = Config(input_path=Path("."), output_dir=tmp_path, cache_dir=tmp_path / "c")
+    assert cfg.llm_enabled is False
     rep = RunReport()
     describe_assets([a], g, cfg, rep)
     assert a.static_summary
@@ -38,8 +46,15 @@ def test_no_llm_when_disabled(real_create, tmp_path, monkeypatch):
     assert rep.llm_calls == 0
 
 
-def test_llm_enrichment_mocked_and_cached(real_create, tmp_path, monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+def test_no_llm_when_flag_off_even_if_logged_in(real_create, tmp_path, monkeypatch):
+    _set_login(monkeypatch, ClaudeAuth(token="t", kind="oauth"))
+    cfg = Config(input_path=Path("."), output_dir=tmp_path,
+                 cache_dir=tmp_path / "c", use_llm=False)
+    assert cfg.llm_enabled is False
+
+
+def test_llm_enrichment_with_login_mocked_and_cached(real_create, tmp_path, monkeypatch):
+    _set_login(monkeypatch, ClaudeAuth(token="oauth-token", kind="oauth"))
     calls = {"n": 0}
 
     def fake_call(prompt, config):
@@ -51,6 +66,7 @@ def test_llm_enrichment_mocked_and_cached(real_create, tmp_path, monkeypatch):
     a = _asset(real_create)
     g = build_graph([a])
     cfg = Config(input_path=Path("."), output_dir=tmp_path, cache_dir=tmp_path / "c")
+    assert cfg.llm_enabled is True
     rep = RunReport()
 
     describe_assets([a], g, cfg, rep)

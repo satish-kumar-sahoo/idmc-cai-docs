@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .auth import LOGIN_HINT
 from .config import Config
 from .pipeline import run
 
@@ -26,7 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
         dest="use_llm",
         action="store_true",
         default=True,
-        help="enable Claude prose enrichment when ANTHROPIC_API_KEY is set (default)",
+        help="enable Claude prose enrichment when logged in to Claude (default)",
     )
     llm.add_argument(
         "--no-llm",
@@ -63,6 +64,9 @@ def main(argv: list[str] | None = None) -> int:
         confidence_threshold=args.confidence_threshold,
         include_sample_data=args.include_sample_data,
     )
+    if config.use_llm and not config.llm_enabled:
+        print(f"note: {LOGIN_HINT}", file=sys.stderr)
+
     try:
         report = run(config)
     except (FileNotFoundError, ValueError) as exc:
@@ -72,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
     print(report.render())
     print(f"\nvault written to: {config.output_dir}")
     if not config.llm_enabled and config.use_llm:
-        print("(LLM enrichment skipped: ANTHROPIC_API_KEY not set)")
+        print("(AI enrichment skipped — not logged in to Claude)")
     return 0
 
 
