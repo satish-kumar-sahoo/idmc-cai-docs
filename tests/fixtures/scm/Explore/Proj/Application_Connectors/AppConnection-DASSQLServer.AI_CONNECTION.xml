@@ -7,12 +7,29 @@
       <types1:Description>DB connection via data access service connector</types1:Description>
       <types1:PublishedContributionId>project:/Proj/AppConnection-DASSQLServer.conn.xml</types1:PublishedContributionId>
       <types1:Entry>
-         <connection xmlns="http://schemas.active-endpoints.com/appmodules/connection/2010/10/avosConnection.xsd"
+         <connection xmlns="http://schemas.informatica.com/socrates/data-services/2014/04/avosConnections.xsd"
+                     displayName="AppConnection-DASSQLServer"
                      name="AppConnection-DASSQLServer">
+            <agent>TME_AWS_LZ_DEV</agent>
             <referencedServiceConnector>DASConnectorSQLServer</referencedServiceConnector>
-            <properties>
-               <property name="baseUrl">jdbc:sqlserver://db.example.com</property>
-            </properties>
+            <attributes>
+               <attribute encrypted="false" name="JDBC Connection URL"
+                          value="jdbc:sqlserver://db.example.com:1433"/>
+               <attribute encrypted="false" name="Username" value="svc_consent"/>
+               <attribute encrypted="true" name="Password" value="s3cr3t-should-not-leak"/>
+            </attributes>
+            <consumers>
+               <consumer enabled="true" name="KafkaConsumer" typeName="KafkaConsumer">
+                  <attributes>
+                     <attribute encrypted="false" name="topic" value="consent.changes.dev"/>
+                  </attributes>
+               </consumer>
+            </consumers>
+            <javaConnector xmlns="http://schemas.informatica.com/appmodules/screenflow/2014/04/avosConnectors.xsd"
+                           plugin="ICS" type="GenericJDBCAdapter"
+                           uuid="33ec8fc7-dc6d-4d2e-9f6f-a950669a62d1">
+               <description>JDBC Generic Cloud Adapter</description>
+            </javaConnector>
          </connection>
       </types1:Entry>
       <types1:GUID>WILL-BE-OVERRIDDEN-BY-SIDECAR</types1:GUID>

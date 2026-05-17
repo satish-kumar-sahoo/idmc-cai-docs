@@ -108,6 +108,22 @@ class ExpressionItem:
 
 
 @dataclass
+class ConnectorAction:
+    """One operation exposed by a service connector (REST or SQL bound)."""
+
+    name: str
+    label: str = ""
+    description: str = ""
+    kind: str = "other"  # rest | sql | other
+    verb: str | None = None  # POST/GET (rest)
+    url: str | None = None  # endpoint template (rest)
+    sql: str | None = None  # statement template (das/sql)
+    headers: list[str] = field(default_factory=list)
+    inputs: list[Field] = field(default_factory=list)
+    outputs: list[Field] = field(default_factory=list)
+
+
+@dataclass
 class SampleData:
     name: str
     field_keys: list[str] = field(default_factory=list)
@@ -152,8 +168,12 @@ class Asset:
     flow: FlowGraph | None = None
     references: list[Reference] = field(default_factory=list)
     sql_blocks: list[SqlBlock] = field(default_factory=list)
+    connector_actions: list[ConnectorAction] = field(default_factory=list)
     expressions: list[ExpressionItem] = field(default_factory=list)
     rest_trigger: bool = False
+    # where it executes: "Cloud" | "Secure Agent" | "Cloud or Secure Agent" | ""
+    runtime: str = ""
+    runtime_detail: str | None = None  # agent group name, or why it's agent-bound
     config: dict[str, str] = field(default_factory=dict)
     sample_data: list[SampleData] = field(default_factory=list)
 

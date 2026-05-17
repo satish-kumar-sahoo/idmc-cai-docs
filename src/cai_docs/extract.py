@@ -13,6 +13,7 @@ import re
 
 from .models import (
     Asset,
+    ConnectorAction,
     ExpressionItem,
     Field,
     FlowEdge,
@@ -41,6 +42,27 @@ _SQL_KEYWORDS = re.compile(
 )
 _CATALOG_RE = re.compile(r"getCatalogResource\(\s*[\"']([^\"']+)[\"']")
 _SECRET_KEY = re.compile(r"(secret|password|passwd|token|apikey|api_key|client_secret|key)$", re.I)
+# attributes whose *values* are live credentials / PII test fixtures, never emitted
+_SECRET_ATTRS = {"testwith", "samplevalue", "defaultvalue"}
+_REDACTED = "<redacted>"
+# value-shaped secret detection: JWT / bearer token. Deliberately narrow so
+# legitimate config (hostnames, JDBC URLs, class names) is never mangled —
+# key-name and encrypted/masked flags handle the rest.
+_JWT_RE = re.compile(r"eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}")
+
+
+def _looks_secret(value: str | None) -> bool:
+    """True only if a value is unambiguously a token (JWT or Bearer header)."""
+    if not value:
+        return False
+    v = value.strip()
+    return bool(_JWT_RE.search(v)) or v[:7].lower() == "bearer "
+
+
+def _safe_value(name: str | None, value: str | None) -> str:
+    if value and (_SECRET_KEY.search(name or "") or _looks_secret(value)):
+        return _REDACTED
+    return value or ""
 
 
 # Platform / engine namespaces that are not project dependencies.
@@ -128,13 +150,17 @@ def _fields(container, child_name: str) -> list[Field]:
         required = _attr(f, "required", "").lower() == "true" or opts.get(
             "required", ""
         ).lower() == "true"
+        fname = _attr(f, "name") or first_text(f, "name")
+        iv = opts.get("initialvalue")
+        if iv and (_SECRET_KEY.search(fname) or _looks_secret(iv)):
+            iv = _REDACTED
         out.append(
             Field(
-                name=_attr(f, "name") or first_text(f, "name"),
+                name=fname,
                 type=_attr(f, "type", "string"),
                 required=required,
                 description=_attr(f, "description", ""),
-                initial_value=opts.get("initialvalue"),
+                initial_value=iv,
             )
         )
     return out
@@ -501,6 +527,157 @@ def _collect_sample_data(item) -> list[SampleData]:
     return out
 
 
+def _attr_value(el) -> str:
+    """Attribute value, redacted when the source marks it secret/encrypted."""
+    enc = (_attr(el, "encrypted") or _attr(el, "masked")).lower() == "true"
+    name = _attr(el, "name")
+    val = _attr(el, "value")
+    if enc:
+        return _REDACTED
+    return _safe_value(name, val)
+
+
+def _read_attributes(container, prefix: str, into: dict[str, str]) -> None:
+    """Flatten <attributes>/<attribute name= value=> (and nested) into a dict."""
+    if container is None:
+        return
+    for attrs in children_local(container, "attributes"):
+        for at in children_local(attrs, "attribute"):
+            nm = _attr(at, "name")
+            if not nm:
+                continue
+            key = f"{prefix}{nm}" if prefix else nm
+            into[key] = _attr_value(at) or "(empty)"
+            for oth in children_local(at, "otherAttributes"):
+                _read_attributes(oth, f"{key}.", into)
+
+
+_AGENT_TAG_RE = re.compile(r"\.agent:([^\s,;<]+)")
+
+
+def _runtime_from_agent_tag(text: str | None) -> tuple[str, str | None] | None:
+    """`.agent:TME_AWS_LZ_DEV` tag -> ("Secure Agent", "TME_AWS_LZ_DEV")."""
+    if not text:
+        return None
+    m = _AGENT_TAG_RE.search(text)
+    if m:
+        return "Secure Agent", m.group(1)
+    return None
+
+
+def _extract_connection(payload, asset: Asset) -> None:
+    """App/data connection: parameters + where it executes."""
+    jc = next(iter(descendants_local(payload, "javaConnector")), None)
+    agent = first_text(payload, "agent") or None
+    agent_only = jc is not None and _attr(jc, "agentOnly").lower() == "true"
+    cloud_only = jc is not None and _attr(jc, "cloudOnly").lower() == "true"
+    if agent_only:
+        asset.runtime, asset.runtime_detail = "Secure Agent", agent
+    elif cloud_only:
+        asset.runtime = "Cloud"
+    elif agent:
+        # configured against a specific Secure Agent group -> runs there
+        asset.runtime, asset.runtime_detail = "Secure Agent", agent
+    else:
+        asset.runtime = "Cloud"
+
+    cfg: dict[str, str] = {}
+    _read_attributes(payload, "", cfg)
+    # older/DAS form: <properties>/<property name=>value
+    for props in children_local(payload, "properties"):
+        for p in children_local(props, "property"):
+            nm = _attr(p, "name")
+            if nm:
+                cfg[nm] = (
+                    _REDACTED if _SECRET_KEY.search(nm) else (p.text or "").strip()
+                ) or "(empty)"
+    for con in descendants_local(payload, "consumer"):
+        cname = _attr(con, "name") or _attr(con, "typeName") or "consumer"
+        _read_attributes(con, f"consumer:{cname}.", cfg)
+    for jc in descendants_local(payload, "javaConnector"):
+        if _attr(jc, "type"):
+            cfg["connector.type"] = _attr(jc, "type")
+        if _attr(jc, "plugin"):
+            cfg["connector.plugin"] = _attr(jc, "plugin")
+    agent = first_text(payload, "agent")
+    if agent:
+        cfg["agent"] = agent
+    rsc = first_text(payload, "referencedServiceConnector")
+    if rsc:
+        cfg["referenced service connector"] = rsc
+    asset.config.update(cfg)
+
+
+def _connector_fields(container, child: str) -> list[Field]:
+    out: list[Field] = []
+    if container is None:
+        return out
+    for p in children_local(container, child):
+        out.append(
+            Field(
+                name=_attr(p, "name") or _attr(p, "label"),
+                type=_attr(p, "type", "string"),
+                required=_attr(p, "required", "").lower() == "true",
+                description=_attr(p, "description", "") or _attr(p, "label", ""),
+            )
+        )
+    return out
+
+
+def _extract_service_connector(payload, asset: Asset) -> None:
+    """Service (business) connector: connection-level attrs + per-action ops."""
+    asset.runtime = (
+        "Secure Agent"
+        if _attr(payload, "agentOnly").lower() == "true"
+        else "Cloud"
+    )
+    if _attr(payload, "plugin"):
+        asset.config["connector.plugin"] = _attr(payload, "plugin")
+    for ca in children_local(payload, "connectionAttributes"):
+        for cattr in children_local(ca, "connectionAttribute"):
+            asset.inputs.append(
+                Field(
+                    name=_attr(cattr, "name") or _attr(cattr, "label"),
+                    type=_attr(cattr, "type", "string"),
+                    required=_attr(cattr, "required", "").lower() == "true",
+                    description=_attr(cattr, "description", "")
+                    or _attr(cattr, "label", ""),
+                )
+            )
+    for group in children_local(payload, "actions") + children_local(
+        payload, "dasActions"
+    ):
+        for act in children_local(group, "action"):
+            ca = ConnectorAction(
+                name=_attr(act, "name"),
+                label=_attr(act, "label") or _attr(act, "name"),
+                description=first_text(act, "description"),
+            )
+            inp = next(iter(children_local(act, "input")), None)
+            outp = next(iter(children_local(act, "output")), None)
+            ca.inputs = _connector_fields(inp, "parameter")
+            ca.outputs = _connector_fields(outp, "field")
+            binding = next(iter(children_local(act, "binding")), None)
+            if binding is not None:
+                rest = next(iter(children_local(binding, "restSimpleBinding")), None)
+                sqlst = next(iter(children_local(binding, "sqlStatement")), None)
+                if rest is not None:
+                    ca.kind = "rest"
+                    ca.verb = _attr(rest, "verb") or None
+                    ca.url = _attr(rest, "url") or None
+                    for hs in children_local(rest, "httpHeaders"):
+                        for h in children_local(hs, "header"):
+                            val = (h.text or "").strip()
+                            nm = _attr(h, "name")
+                            if _SECRET_KEY.search(nm) or "authorization" in nm.lower():
+                                val = _REDACTED
+                            ca.headers.append(f"{nm}: {val}".strip(": "))
+                elif sqlst is not None:
+                    ca.kind = "sql"
+                    ca.sql = first_text(sqlst, "statement") or None
+            asset.connector_actions.append(ca)
+
+
 def _raw_dump(payload, cap: int = 400) -> list[tuple[str, str]]:
     dump: list[tuple[str, str]] = []
     if payload is None:
@@ -509,7 +686,24 @@ def _raw_dump(payload, cap: int = 400) -> list[tuple[str, str]]:
         if not isinstance(el.tag, str):
             continue
         text = (el.text or "").strip()
-        attrs = " ".join(f'{k.rsplit("}", 1)[-1]}={v}' for k, v in el.attrib.items())
+        if _looks_secret(text):
+            text = _REDACTED
+        secret_val = (
+            (_attr(el, "encrypted") or _attr(el, "masked")).lower() == "true"
+        )
+        parts = []
+        for k, v in el.attrib.items():
+            kn = k.rsplit("}", 1)[-1]
+            kl = kn.lower()
+            if (
+                kl in _SECRET_ATTRS
+                or _SECRET_KEY.search(kn)
+                or (secret_val and kl == "value")
+                or _looks_secret(v)
+            ):
+                v = _REDACTED
+            parts.append(f"{kn}={v}")
+        attrs = " ".join(parts)
         if not text and not attrs:
             continue
         path = lname(el)
@@ -634,6 +828,9 @@ def extract(
                 first_text(item, "PublishedContributionId") or None
             )
             asset.guid = first_text(item, "GUID") or None
+            rt = _runtime_from_agent_tag(first_text(item, "Tags"))
+            if rt:
+                asset.runtime, asset.runtime_detail = rt
 
         payload = _payload(doc, item)
         if payload is not None:
@@ -645,6 +842,12 @@ def extract(
             asset.references = _collect_references(payload)
             asset.expressions = _collect_expressions(payload)
             asset.sql_blocks = _collect_sql(payload)
+
+            root_lname = lname(payload).lower()
+            if root_lname == "connection" or asset_type == "connection":
+                _extract_connection(payload, asset)
+            elif root_lname == "businessconnector" or asset_type == "service_connector":
+                _extract_service_connector(payload, asset)
 
             ns_blob = _ns_blob(doc, payload)
             is_process_root = lname(payload).lower() == "process"

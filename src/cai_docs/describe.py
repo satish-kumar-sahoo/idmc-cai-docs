@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections import Counter
 
 from .config import Config
 from .models import Asset, AssetGraph, RunReport
@@ -18,60 +17,64 @@ from .models import Asset, AssetGraph, RunReport
 _SECRET_HINT = ("secret", "password", "passwd", "token", "apikey", "api_key", "credential")
 
 
+def _join(names: list[str], limit: int = 6) -> str:
+    names = [n for n in names if n]
+    if len(names) > limit:
+        return ", ".join(names[:limit]) + f", and {len(names) - limit} more"
+    if len(names) > 1:
+        return ", ".join(names[:-1]) + " and " + names[-1]
+    return names[0] if names else ""
+
+
 def static_summary(asset: Asset, graph: AssetGraph) -> str:
+    """A short, functional description — what the asset does, in plain terms."""
     lines: list[str] = []
     kind = asset.asset_type.replace("_", " ")
-    lead = f"**{asset.name}** is a {kind}"
     if asset.description:
-        lead += f" — {asset.description.strip()}"
-    lines.append(lead + ".")
+        lines.append(asset.description.strip())
+    else:
+        lines.append(f"{asset.name} is a {kind}.")
 
-    if asset.asset_type == "process" and asset.flow:
-        kinds = Counter(n.kind for n in asset.flow.nodes)
-        bits = []
-        for k in ("subflow", "service", "assignment", "container", "throw"):
-            if kinds.get(k):
-                label = {
-                    "subflow": "subprocess call",
-                    "service": "connector call",
-                    "assignment": "assignment",
-                    "container": "branch/parallel block",
-                    "throw": "error",
-                }[k]
-                n = kinds[k]
-                bits.append(f"{n} {label}{'s' if n != 1 else ''}")
-        if bits:
-            lines.append("Flow contains " + ", ".join(bits) + ".")
-        if asset.rest_trigger:
-            lines.append("Triggered as a REST endpoint.")
-
-    if asset.inputs or asset.outputs:
-        lines.append(
-            f"Interface: {len(asset.inputs)} input(s), {len(asset.outputs)} output(s), "
-            f"{len(asset.temp_fields)} temp field(s)."
+    if asset.asset_type == "process":
+        subs = sorted({r.target_name for r in asset.references if r.kind == "subprocess"})
+        conns = sorted(
+            {
+                r.target_name
+                for r in asset.references
+                if r.kind in ("connection", "service_connector")
+            }
         )
-
-    subs = [r.target_name for r in asset.references if r.kind == "subprocess"]
-    if subs:
-        lines.append("Calls subprocesses: " + ", ".join(sorted(set(filter(None, subs)))) + ".")
-    conns = sorted(
-        {
-            f"{r.target_name}{(' / ' + r.action) if r.action else ''}"
-            for r in asset.references
-            if r.kind in ("connection", "service_connector")
-        }
-    )
-    if conns:
-        lines.append("Uses connections: " + "; ".join(conns) + ".")
-    if asset.sql_blocks:
-        lines.append(f"Executes {len(asset.sql_blocks)} embedded SQL statement(s).")
-    cats = sorted({r.raw for r in asset.references if r.kind == "catalog_resource"})
-    if cats:
-        lines.append("Reads project resources: " + ", ".join(cats) + ".")
+        does: list[str] = []
+        if asset.rest_trigger:
+            does.append("is triggered as a REST endpoint")
+        if subs:
+            does.append(f"orchestrates {_join(list(filter(None, subs)))}")
+        if conns:
+            does.append(f"integrates with {_join(list(filter(None, conns)))}")
+        if asset.sql_blocks:
+            n = len(asset.sql_blocks)
+            does.append(f"runs {n} database quer{'y' if n == 1 else 'ies'}")
+        if does:
+            lines.append(
+                f"It {_join(does, limit=4)}." if len(does) > 1 else f"It {does[0]}."
+            )
+    elif asset.asset_type in ("connection", "service_connector"):
+        if asset.connector_actions:
+            acts = [a.label or a.name for a in asset.connector_actions]
+            lines.append(f"Exposes {len(acts)} action(s): {_join(acts)}.")
+        if asset.inputs:
+            lines.append(f"Configured by {len(asset.inputs)} parameter(s).")
 
     used_by = graph.used_by.get(asset.key, [])
     if used_by:
-        lines.append(f"Used by {len({e.source_key for e in used_by})} other asset(s).")
+        by_key = graph.by_key()
+        callers = sorted(
+            {
+                (by_key[e.source_key].name if e.source_key in by_key else e.source_key)
+                for e in used_by
+            }
+        )
+        lines.append(f"Used by {_join(callers)}.")
     return "\n".join(lines)
 
 
@@ -112,10 +115,13 @@ def _prompt(asset: Asset) -> str:
     payload = json.dumps(_redacted_payload(asset), indent=2, ensure_ascii=False)
     return (
         "You are documenting an Informatica Cloud Application Integration asset "
-        "for engineers browsing an Obsidian knowledge base. Given the structured "
-        "summary below, write 2-4 sentences of plain-English prose explaining what "
-        "this asset does and its core logic. Be concrete and factual; do not invent "
-        "details that are not implied by the data. Do not use headings or lists.\n\n"
+        "for someone who wants to understand what it does, not how it is wired. "
+        "Given the structured summary below, write 2-3 sentences of plain-English "
+        "prose describing its business purpose and what it accomplishes — the "
+        "outcome and the data it works with. Favour functional language over "
+        "technical internals; do not list node types, parameter counts, or "
+        "implementation mechanics. Be factual; do not invent details. No "
+        "headings or lists.\n\n"
         f"{payload}"
     )
 

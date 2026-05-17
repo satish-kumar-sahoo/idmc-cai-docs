@@ -150,4 +150,45 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
                 link(a, f"external:{kind}:{label}", kind, label, resolved=False)
                 g.unresolved.append(ref)
 
+    _propagate_runtime(g)
     return g
+
+
+_RUNTIME_PROPAGATING = {
+    "calls-subprocess", "uses-connection", "uses-service-connector",
+}
+
+
+def _propagate_runtime(g: AssetGraph) -> None:
+    """An asset effectively runs on the Secure Agent if anything it calls does.
+
+    Connection/service-connector runtime is intrinsic (set at extraction);
+    a process's runtime is otherwise the Cloud Server unless it invokes an
+    agent-bound connector or subprocess, in which case it must run there too.
+    Iterates to a fixpoint so the binding flows process -> subprocess -> ...
+    """
+    by_key = g.by_key()
+    changed = True
+    while changed:
+        changed = False
+        for a in g.assets:
+            if a.runtime == "Secure Agent":
+                continue
+            for e in g.uses.get(a.key, []):
+                if not e.resolved or e.kind not in _RUNTIME_PROPAGATING:
+                    continue
+                tgt = by_key.get(e.target_key)
+                if tgt is not None and tgt.runtime == "Secure Agent":
+                    a.runtime = "Secure Agent"
+                    a.runtime_detail = (
+                        a.runtime_detail or f"requires Secure Agent (via {tgt.name})"
+                    )
+                    changed = True
+                    break
+    # only executable assets have a runtime; data definitions (schema,
+    # process object, resource, ...) do not "run" anywhere.
+    for a in g.assets:
+        if not a.runtime and a.asset_type in (
+            "process", "connection", "service_connector"
+        ):
+            a.runtime = "Cloud"

@@ -24,13 +24,15 @@ def _set_login(monkeypatch, auth):
     monkeypatch.setattr(config_mod, "resolve_auth", lambda: auth)
 
 
-def test_static_summary_always_present(real_create):
+def test_static_summary_is_functional(real_create):
     a = _asset(real_create)
     g = build_graph([a])
     s = static_summary(a, g)
     assert "createMultipleIdentifier" in s
-    assert "subprocess" in s.lower()
-    assert "SQL" in s
+    # functional, outcome-oriented wording (not raw node-kind/interface counts)
+    assert "orchestrates" in s.lower()
+    assert "database quer" in s.lower()
+    assert "node" not in s.lower() and "input(s)" not in s.lower()
 
 
 def test_no_llm_when_not_logged_in(real_create, tmp_path, monkeypatch):

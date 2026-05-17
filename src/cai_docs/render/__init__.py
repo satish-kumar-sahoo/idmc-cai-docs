@@ -107,6 +107,8 @@ class VaultWriter:
 
     def _frontmatter(self, a: Asset) -> str:
         tags = [f"cai/{a.asset_type}"]
+        if a.runtime:
+            tags.append(f"runtime/{a.runtime.lower().replace(' ', '-')}")
         if a.needs_review:
             tags.append("needs-review")
         fields = {
@@ -116,6 +118,8 @@ class VaultWriter:
             "project": a.project_path or "",
             "version": a.version_label or "",
             "publication_status": a.publication_status or "",
+            "runtime": a.runtime or "",
+            "runtime_detail": a.runtime_detail or "",
             "modified_by": a.modified_by or "",
             "modified_date": a.modification_date or "",
             "source_path": a.source_relpath,
@@ -350,6 +354,8 @@ class VaultWriter:
                 frontmatter=self._frontmatter(a),
                 title=a.display_name or a.name,
                 needs_review=a.needs_review,
+                runtime=a.runtime,
+                runtime_detail=a.runtime_detail,
                 confidence=a.confidence,
                 notes=a.notes,
                 summary=a.static_summary,
@@ -359,6 +365,7 @@ class VaultWriter:
                 outputs=a.outputs,
                 temp_fields=a.temp_fields,
                 sql_blocks=a.sql_blocks,
+                connector_actions=a.connector_actions,
                 connectors=connectors,
                 uses=uses,
                 used_by=used_by,

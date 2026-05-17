@@ -1,7 +1,10 @@
 {{ frontmatter }}
 # {{ title }}
 
-{% if needs_review %}> [!warning] Needs review
+{% if runtime %}> [!info] Runs on: **{{ runtime }}**{% if runtime_detail %} — {{ runtime_detail }}{% endif %}
+
+
+{% endif %}{% if needs_review %}> [!warning] Needs review
 > Low classification confidence ({{ '%.2f'|format(confidence) }}) or degraded extraction. Treat the detail below as best-effort.
 {% if notes %}{% for n in notes %}> - {{ n }}
 {% endfor %}{% endif %}
@@ -64,6 +67,38 @@
 ```
 
 {% endfor %}{% endif %}
+{% if connector_actions %}
+## Actions
+
+{% for ac in connector_actions %}### {{ ac.label or ac.name }}
+
+{% if ac.description %}{{ ac.description }}
+
+{% endif %}**Type:** {{ ac.kind }}{% if ac.verb %} · `{{ ac.verb }}`{% endif %}{% if ac.url %} · `{{ ac.url }}`{% endif %}
+
+
+{% if ac.headers %}**Headers:** {% for h in ac.headers %}`{{ h }}`{% if not loop.last %}, {% endif %}{% endfor %}
+
+
+{% endif %}{% if ac.inputs %}**Inputs**
+
+| name | type | required |
+|---|---|---|
+{% for f in ac.inputs %}| {{ f.name }} | {{ f.type }} | {{ 'yes' if f.required else 'no' }} |
+{% endfor %}
+
+{% endif %}{% if ac.outputs %}**Outputs**
+
+| name | type |
+|---|---|
+{% for f in ac.outputs %}| {{ f.name }} | {{ f.type }} |
+{% endfor %}
+
+{% endif %}{% if ac.sql %}```sql
+{{ ac.sql }}
+```
+
+{% endif %}{% endfor %}{% endif %}
 {% if connectors %}
 ## Connector calls
 

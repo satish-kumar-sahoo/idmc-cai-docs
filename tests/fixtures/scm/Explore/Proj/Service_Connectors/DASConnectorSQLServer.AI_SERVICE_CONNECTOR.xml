@@ -7,9 +7,64 @@
       <types1:Description>Data access service connector for SQL Server</types1:Description>
       <types1:PublishedContributionId>project:/Proj/DASConnectorSQLServer.svc.xml</types1:PublishedContributionId>
       <types1:Entry>
-         <connector name="DASConnectorSQLServer">
-            <action name="SQL DB Query Execution"/>
-         </connector>
+         <businessConnector xmlns="http://schemas.informatica.com/socrates/data-services/2014/05/business-connector-model.xsd"
+                            agentOnly="true"
+                            displayName="DASConnectorSQLServer"
+                            name="DASConnectorSQLServer"
+                            plugin="DAS"
+                            uuid="0eadab63-aea2-4609-90b2-34578c11ca9f">
+            <description>Data access service connector for SQL Server</description>
+            <connectionAttributes xmlns="http://schemas.informatica.com/appmodules/screenflow/2014/04/avosConnectors.xsd">
+               <connectionAttribute description="The JDBC connection URL." label="JDBC Connection URL"
+                                    masked="false" name="jdbcUrl" required="true"
+                                    testWith="jdbc:sqlserver://secret-host:1433" type="string"/>
+               <connectionAttribute description="The password to log in." label="Password"
+                                    masked="true" name="password" required="true"
+                                    testWith="do-not-leak-this-password" type="string"/>
+            </connectionAttributes>
+            <actions>
+               <action label="Submit Consent" name="Submit Consent" preemptiveAuth="true">
+                  <description>Submit a consent receipt to OneTrust.</description>
+                  <input>
+                     <parameter name="Authorization" required="true"
+                                testWith="Bearer eyJSECRETtokenSHOULDNOTLEAK" type="string"/>
+                     <parameter name="JSONPayload" required="true"
+                                testWith="{&quot;customerID&quot;:&quot;PII-LEAK-1234&quot;}" type="string"/>
+                  </input>
+                  <binding>
+                     <restSimpleBinding url="{$OneTrustURL}" verb="POST">
+                        <httpHeaders>
+                           <header name="Authorization">Bearer {$Authorization}</header>
+                           <header name="Content-Type">application/json</header>
+                        </httpHeaders>
+                        <body>{$JSONPayload}</body>
+                     </restSimpleBinding>
+                  </binding>
+                  <output>
+                     <field entireResponse="true" name="output" type="string"/>
+                  </output>
+               </action>
+            </actions>
+            <dasActions>
+               <action label="SQL DB Query Execution" name="SQL DB Query Execution">
+                  <description/>
+                  <input>
+                     <parameter name="Query" required="false"
+                                testWith="select 1" type="string"/>
+                  </input>
+                  <binding>
+                     <sqlStatement columnCase="unchanged" statementId="Query_Execution">
+                        <statement>{$Query}</statement>
+                     </sqlStatement>
+                  </binding>
+                  <output>
+                     <field name="record_count" property="record_count" type="int"/>
+                  </output>
+               </action>
+            </dasActions>
+            <objects/>
+         </businessConnector>
       </types1:Entry>
+      <types1:GUID>2zjKzJvvHKveMCUbufVPmK</types1:GUID>
    </types1:Item>
 </aetgt:getResponse>
