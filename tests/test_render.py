@@ -84,6 +84,26 @@ def test_process_pages_have_mermaid_and_frontmatter(tmp_path):
     assert "flowchart TD" in page
 
 
+def test_mermaid_edge_labels_are_quoted(tmp_path):
+    """Mermaid rejects unquoted (), $, comma in edge labels -> diagram fails
+    to render. Condition expressions (string-equals($temp.x, ...)) MUST be
+    emitted as quoted edge labels: A -->|"..."| B."""
+    vault = _build_vault(tmp_path)
+    page = (vault / "spi.createMultipleIdentifier" / "createMultipleIdentifier.md").read_text(
+        encoding="utf-8"
+    )
+    mermaid = re.search(r"```mermaid\n(.*?)\n```", page, re.DOTALL).group(1)
+    edge_label_lines = [
+        ln for ln in mermaid.splitlines() if re.search(r"-\.?->\|", ln)
+    ]
+    assert edge_label_lines, "expected at least one labelled edge"
+    for ln in edge_label_lines:
+        body = ln.split("|", 1)[1].rsplit("|", 1)[0]
+        assert body.startswith('"') and body.endswith('"'), (
+            f"edge label not quoted (Mermaid will fail to parse): {ln!r}"
+        )
+
+
 def test_no_dangling_wikilinks(tmp_path):
     vault = _build_vault(tmp_path)
     pages = list(vault.rglob("*.md"))

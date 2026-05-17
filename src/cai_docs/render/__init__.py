@@ -207,9 +207,9 @@ class VaultWriter:
             emitted.add(key)
             s, t = mid[e.source], mid[e.target]
             if e.condition:
-                lines.append(f"    {s} -->|{_edge_label(e.condition)}| {t}")
+                lines.append(f'    {s} -->|"{_edge_label(e.condition)}"| {t}')
             elif e.kind == "catch":
-                lines.append(f"    {s} -.->|error| {t}")
+                lines.append(f'    {s} -.->|"error"| {t}')
             else:
                 lines.append(f"    {s} --> {t}")
         lines.extend(f"    {c}" for c in clicks)
