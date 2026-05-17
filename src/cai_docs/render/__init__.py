@@ -8,6 +8,7 @@ MOC index pages, and a Home page. Note names are made unique so Obsidian
 from __future__ import annotations
 
 import re
+import textwrap
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -52,6 +53,52 @@ def _edge_label(text: str, limit: int = 40) -> str:
     if len(text) > limit:
         text = text[: limit - 1] + "…"
     return text or "cond"
+
+
+def _format_code(text: str) -> str:
+    """Tidy an expression for a fenced code block without parsing it.
+
+    Normalises newlines, expands tabs, removes common leading indentation and
+    trailing whitespace, and trims blank edge lines. Deliberately conservative
+    — it never rewrites the XQuery itself, just presents it readably.
+    """
+    if not text:
+        return ""
+    s = text.replace("\r\n", "\n").replace("\r", "\n").expandtabs(4)
+    lines = [ln.rstrip() for ln in s.split("\n")]
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return textwrap.dedent("\n".join(lines)).strip("\n")
+
+
+def _fence(code: str) -> str:
+    """Pick a fence that the code body cannot break out of."""
+    fence = "```"
+    while fence in code:
+        fence += "`"
+    return fence
+
+
+def _expr_rows(expressions: list) -> list[dict]:
+    rows = []
+    for i, e in enumerate(expressions, 1):
+        code = _format_code(e.expression)
+        lang = (e.language or "XQuery").strip()
+        rows.append(
+            {
+                "n": i,
+                "target": e.target or "",
+                "language": lang,
+                "context": e.context or "",
+                "lines": code.count("\n") + 1 if code else 0,
+                "code": code,
+                "fence": _fence(code),
+                "lang_tag": "sql" if lang.lower() == "sql" else "xquery",
+            }
+        )
+    return rows
 
 
 class VaultWriter:
@@ -109,6 +156,8 @@ class VaultWriter:
         tags = [f"cai/{a.asset_type}"]
         if a.runtime:
             tags.append(f"runtime/{a.runtime.lower().replace(' ', '-')}")
+        if a.runtime == "Cloud" and a.agent_dependencies:
+            tags.append("runtime/hybrid")
         if a.needs_review:
             tags.append("needs-review")
         fields = {
@@ -120,6 +169,7 @@ class VaultWriter:
             "publication_status": a.publication_status or "",
             "runtime": a.runtime or "",
             "runtime_detail": a.runtime_detail or "",
+            "delegates_to_agent": ", ".join(a.agent_dependencies),
             "modified_by": a.modified_by or "",
             "modified_date": a.modification_date or "",
             "source_path": a.source_relpath,
@@ -356,6 +406,7 @@ class VaultWriter:
                 needs_review=a.needs_review,
                 runtime=a.runtime,
                 runtime_detail=a.runtime_detail,
+                agent_dependencies=a.agent_dependencies,
                 confidence=a.confidence,
                 notes=a.notes,
                 summary=a.static_summary,
@@ -366,11 +417,12 @@ class VaultWriter:
                 temp_fields=a.temp_fields,
                 sql_blocks=a.sql_blocks,
                 connector_actions=a.connector_actions,
+                timeouts=a.timeouts,
                 tables=a.tables,
                 connectors=connectors,
                 uses=uses,
                 used_by=used_by,
-                expressions=a.expressions[:20],
+                expressions=_expr_rows(a.expressions[:20]),
                 config=a.config,
                 sample_data=a.sample_data,
                 include_sample_data=self.config.include_sample_data,

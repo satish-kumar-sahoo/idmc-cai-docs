@@ -679,6 +679,56 @@ def _extract_service_connector(payload, asset: Asset) -> None:
             asset.connector_actions.append(ca)
 
 
+_TIMEOUT_RE = re.compile(r"time\s*-?\s*out", re.I)
+
+
+def _collect_timeouts(payload) -> list[str]:
+    """Configured timeout values, keyed on a name containing 'timeout'.
+
+    Deliberately name-based: a fault message like
+    ``<parameter name="detail">DB Connection Timeout</parameter>`` or an
+    XQuery branch returning 'Gateway Timeout' is prose, not configuration,
+    and its element/attribute names do not contain 'timeout', so it is
+    correctly ignored.
+    """
+    out: list[str] = []
+    seen: set[tuple] = set()
+
+    def add(label: str, value: str | None, ctx: str | None) -> None:
+        v = (value or "").strip()
+        if not v:
+            return
+        # timeouts are numbers / ISO-8601 durations / {$param} refs, not prose
+        if len(v) > 60 or (v.count(" ") >= 3 and not v.startswith("{")):
+            return
+        sig = (label, v, ctx)
+        if sig in seen:
+            return
+        seen.add(sig)
+        out.append(f"{label}: {v}" + (f" ({ctx})" if ctx else ""))
+
+    for el in payload.iter():
+        if not isinstance(el.tag, str):
+            continue
+        ln = lname(el)
+        parent = el.getparent()
+        pctx = (
+            lname(parent)
+            if parent is not None and isinstance(parent.tag, str)
+            else None
+        )
+        if _TIMEOUT_RE.search(ln):
+            add(ln, (el.text or "").strip() or _attr(el, "value"), pctx)
+        for k, v in el.attrib.items():
+            kn = _localize(k)
+            if _TIMEOUT_RE.search(kn):
+                add(kn, v, ln)
+        nm = _attr(el, "name")
+        if nm and _TIMEOUT_RE.search(nm):
+            add(nm, _attr(el, "value") or (el.text or "").strip(), pctx or ln)
+    return out
+
+
 def _localize(key: str) -> str:
     return key.rsplit("}", 1)[-1]
 
@@ -936,6 +986,9 @@ def extract(
                 _extract_service_connector(payload, asset)
             elif asset_type == "resource":
                 asset.tables = _extract_reference_tables(payload)
+
+            if asset_type in ("process", "connection", "service_connector"):
+                asset.timeouts = _collect_timeouts(payload)
 
             ns_blob = _ns_blob(doc, payload)
             is_process_root = lname(payload).lower() == "process"

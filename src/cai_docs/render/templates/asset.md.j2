@@ -1,9 +1,9 @@
 {{ frontmatter }}
 # {{ title }}
 
-{% if runtime %}> [!info] Runs on: **{{ runtime }}**{% if runtime_detail %} — {{ runtime_detail }}{% endif %}
-
-
+{% if runtime %}> [!info] Runs on: **{{ runtime }}**{{ (' — ' ~ runtime_detail) if runtime_detail else '' }}
+{% if agent_dependencies %}> Delegates to the Secure Agent: {{ agent_dependencies | join(', ') }}
+{% endif %}{{ '' }}
 {% endif %}{% if needs_review %}> [!warning] Needs review
 > Low classification confidence ({{ '%.2f'|format(confidence) }}) or degraded extraction. Treat the detail below as best-effort.
 {% if notes %}{% for n in notes %}> - {{ n }}
@@ -117,12 +117,26 @@
 {% if expressions %}
 ## Expressions
 
-{% for e in expressions %}- {% if e.target %}`{{ e.target }}` ⇐ {% endif %}({{ e.language }}) `{{ e.expression | replace('\n', ' ') | truncate(180) }}`
+| # | Target | Language | Context | Lines |
+|---|---|---|---|---|
+{% for e in expressions %}| {{ e.n }} | {{ (e.target | replace('|', '\\|')) or '—' }} | {{ e.language }} | {{ (e.context | replace('|', '\\|')) or '—' }} | {{ e.lines }} |
+{% endfor %}
+{% for e in expressions %}**[{{ e.n }}]{{ (' `' ~ e.target ~ '`') if e.target else '' }}** — {{ e.language }}{{ (' · ' ~ e.context) if e.context else '' }}
+
+{{ e.fence }}{{ e.lang_tag }}
+{{ e.code }}
+{{ e.fence }}
+
 {% endfor %}{% endif %}
 {% if config %}
 ## Configuration
 
 {% for k, v in config.items() %}- **{{ k }}**: {{ v }}
+{% endfor %}{% endif %}
+{% if timeouts %}
+## Timeouts
+
+{% for t in timeouts %}- {{ t }}
 {% endfor %}{% endif %}
 {% if tables %}
 ## Reference data

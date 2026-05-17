@@ -1,4 +1,7 @@
-"""Runtime location (Cloud vs Secure Agent) extraction + graph propagation."""
+"""Runtime location: an asset's own runtime is intrinsic and is NOT
+overwritten by what it calls. A Cloud process that invokes an agent-bound
+connector/subprocess still runs on the Cloud Server; it only *delegates*
+those steps to the Secure Agent (surfaced via agent_dependencies)."""
 
 from cai_docs.graph import build_graph
 from cai_docs.models import Asset, Reference
@@ -11,32 +14,52 @@ def _proc(name, key, refs=None):
     return a
 
 
-def test_secure_agent_propagates_process_to_subprocess_to_connection():
-    # leaf connection is intrinsically agent-bound
+def test_cloud_process_delegates_but_keeps_its_own_runtime():
     conn = Asset(source_relpath="AppConnection-JDBC.AI_CONNECTION.xml",
                  asset_type="connection", name="AppConnection-JDBC",
                  guid="K1", runtime="Secure Agent", runtime_detail="TME")
-    # subprocess uses the agent-only connection
     sub = _proc("DbSubProcess", "S1",
                 [Reference(kind="connection", raw="AppConnection-JDBC",
                            target_name="AppConnection-JDBC")])
-    # top process only calls the subprocess (no direct agent dependency)
     top = _proc("TopProcess", "T1",
                 [Reference(kind="subprocess", raw="DbSubProcess",
                            target_name="DbSubProcess")])
-    # a process that touches nothing agent-bound stays on Cloud
     cloudy = _proc("CloudOnly", "C1")
 
     g = build_graph([top, sub, conn, cloudy])
     by = {a.name: a for a in g.assets}
+
+    # the connection's own runtime is intrinsic
     assert by["AppConnection-JDBC"].runtime == "Secure Agent"
-    assert by["DbSubProcess"].runtime == "Secure Agent"
-    assert by["TopProcess"].runtime == "Secure Agent"  # transitively
-    assert "Secure Agent" in (by["TopProcess"].runtime_detail or "")
-    assert by["CloudOnly"].runtime == "Cloud"  # default when nothing agent-bound
+    # the subprocess runs on Cloud but delegates the DB call to the agent
+    assert by["DbSubProcess"].runtime == "Cloud"
+    assert by["DbSubProcess"].agent_dependencies == ["AppConnection-JDBC"]
+    # the top process also stays on Cloud, and sees the delegation
+    # transitively (through the Cloud subprocess)
+    assert by["TopProcess"].runtime == "Cloud"
+    assert by["TopProcess"].agent_dependencies == ["AppConnection-JDBC"]
+    # a process touching nothing agent-bound is plain Cloud, no delegation
+    assert by["CloudOnly"].runtime == "Cloud"
+    assert by["CloudOnly"].agent_dependencies == []
 
 
-def test_cloud_service_connector_does_not_force_agent():
+def test_explicitly_pinned_process_stays_secure_agent():
+    pinned = _proc("PinnedProc", "P1")
+    pinned.runtime = "Secure Agent"  # from a .agent: tag at extraction
+    pinned.runtime_detail = "TME_AWS_LZ_DEV"
+    caller = _proc("Caller", "C1",
+                   [Reference(kind="subprocess", raw="PinnedProc",
+                              target_name="PinnedProc")])
+    g = build_graph([caller, pinned])
+    by = {a.name: a for a in g.assets}
+    assert by["PinnedProc"].runtime == "Secure Agent"  # not downgraded
+    assert by["PinnedProc"].runtime_detail == "TME_AWS_LZ_DEV"
+    # caller runs on Cloud, delegates to the pinned (agent) subprocess
+    assert by["Caller"].runtime == "Cloud"
+    assert by["Caller"].agent_dependencies == ["PinnedProc"]
+
+
+def test_cloud_service_connector_creates_no_delegation():
     svc = Asset(source_relpath="ServiceConnector-OT.AI_SERVICE_CONNECTOR.xml",
                 asset_type="service_connector", name="ServiceConnector-OT",
                 guid="V1", runtime="Cloud")
@@ -44,4 +67,6 @@ def test_cloud_service_connector_does_not_force_agent():
                  [Reference(kind="service_connector", raw="ServiceConnector-OT",
                             target_name="ServiceConnector-OT")])
     g = build_graph([proc, svc])
-    assert {a.name: a.runtime for a in g.assets}["RestProcess"] == "Cloud"
+    by = {a.name: a for a in g.assets}
+    assert by["RestProcess"].runtime == "Cloud"
+    assert by["RestProcess"].agent_dependencies == []

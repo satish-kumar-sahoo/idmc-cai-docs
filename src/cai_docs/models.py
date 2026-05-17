@@ -178,12 +178,16 @@ class Asset:
     references: list[Reference] = field(default_factory=list)
     sql_blocks: list[SqlBlock] = field(default_factory=list)
     connector_actions: list[ConnectorAction] = field(default_factory=list)
+    timeouts: list[str] = field(default_factory=list)  # "label: value (context)"
     tables: list[DataTable] = field(default_factory=list)
     expressions: list[ExpressionItem] = field(default_factory=list)
     rest_trigger: bool = False
-    # where it executes: "Cloud" | "Secure Agent" | "Cloud or Secure Agent" | ""
+    # where THIS asset's own orchestration executes: "Cloud" | "Secure Agent" | ""
     runtime: str = ""
-    runtime_detail: str | None = None  # agent group name, or why it's agent-bound
+    runtime_detail: str | None = None  # explicit agent group name, when pinned
+    # names of Secure-Agent assets this one delegates steps to (it may still
+    # run on Cloud itself — a Cloud process can call an agent-bound connector)
+    agent_dependencies: list[str] = field(default_factory=list)
     config: dict[str, str] = field(default_factory=dict)
     sample_data: list[SampleData] = field(default_factory=list)
 

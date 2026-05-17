@@ -160,31 +160,21 @@ _RUNTIME_PROPAGATING = {
 
 
 def _propagate_runtime(g: AssetGraph) -> None:
-    """An asset effectively runs on the Secure Agent if anything it calls does.
+    """Resolve where each asset runs.
 
-    Connection/service-connector runtime is intrinsic (set at extraction);
-    a process's runtime is otherwise the Cloud Server unless it invokes an
-    agent-bound connector or subprocess, in which case it must run there too.
-    Iterates to a fixpoint so the binding flows process -> subprocess -> ...
+    An asset's *own* runtime is intrinsic and is never overwritten by what it
+    calls: a connection/service-connector is set at extraction; a process runs
+    on the Cloud Server unless it is explicitly pinned to a Secure Agent group
+    (its runtime was set from the `.agent:` tag at extraction). A Cloud process
+    that invokes an agent-bound connection or subprocess still runs on the
+    Cloud Server — it merely *delegates* those steps to the Secure Agent.
+
+    So instead of propagating the location upward, we record, for each asset,
+    the set of Secure-Agent assets it delegates to (transitively, since a
+    subprocess may itself delegate further).
     """
     by_key = g.by_key()
-    changed = True
-    while changed:
-        changed = False
-        for a in g.assets:
-            if a.runtime == "Secure Agent":
-                continue
-            for e in g.uses.get(a.key, []):
-                if not e.resolved or e.kind not in _RUNTIME_PROPAGATING:
-                    continue
-                tgt = by_key.get(e.target_key)
-                if tgt is not None and tgt.runtime == "Secure Agent":
-                    a.runtime = "Secure Agent"
-                    a.runtime_detail = (
-                        a.runtime_detail or f"requires Secure Agent (via {tgt.name})"
-                    )
-                    changed = True
-                    break
+
     # only executable assets have a runtime; data definitions (schema,
     # process object, resource, ...) do not "run" anywhere.
     for a in g.assets:
@@ -192,3 +182,23 @@ def _propagate_runtime(g: AssetGraph) -> None:
             "process", "connection", "service_connector"
         ):
             a.runtime = "Cloud"
+
+    def agent_deps(a, seen: set[str]) -> set[str]:
+        names: set[str] = set()
+        for e in g.uses.get(a.key, []):
+            if not e.resolved or e.kind not in _RUNTIME_PROPAGATING:
+                continue
+            tgt = by_key.get(e.target_key)
+            if tgt is None or tgt.key in seen:
+                continue
+            seen.add(tgt.key)
+            if tgt.runtime == "Secure Agent":
+                names.add(tgt.name)
+            # follow through Cloud assets to surface deeper agent-bound steps
+            names |= agent_deps(tgt, seen)
+        return names
+
+    for a in g.assets:
+        deps = sorted(agent_deps(a, {a.key}))
+        # don't list yourself; only meaningful when you don't already run there
+        a.agent_dependencies = [d for d in deps if d and d != a.name]
