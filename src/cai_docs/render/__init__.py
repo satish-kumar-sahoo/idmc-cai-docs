@@ -355,8 +355,35 @@ class VaultWriter:
 
     # --- write --------------------------------------------------------------
 
+    @staticmethod
+    def _clean_output(out: Path) -> None:
+        """Wipe a stale vault so a regen never mixes assets from another repo.
+
+        Removes everything inside the output directory EXCEPT a top-level
+        ``.obsidian`` folder (the user's Obsidian settings/workspace). Refuses
+        obviously dangerous targets (filesystem root, cwd or its parents).
+        """
+        import shutil
+
+        out = out.resolve()
+        if out.parent == out:  # filesystem root
+            raise ValueError(f"refusing to wipe filesystem root: {out}")
+        cwd = Path.cwd().resolve()
+        if out == cwd or out in cwd.parents:
+            raise ValueError(f"refusing to wipe {out} (cwd or an ancestor)")
+        if not out.exists():
+            return
+        for entry in out.iterdir():
+            if entry.name == ".obsidian":
+                continue
+            if entry.is_dir() and not entry.is_symlink():
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
+
     def write(self, graph: AssetGraph, report: RunReport) -> None:
         out = self.config.output_dir
+        self._clean_output(out)
         out.mkdir(parents=True, exist_ok=True)
         names = self._assign_note_names(graph.assets)
         by_key = graph.by_key()
