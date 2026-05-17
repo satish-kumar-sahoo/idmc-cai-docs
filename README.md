@@ -38,6 +38,9 @@ flagged `needs-review` — data is never silently dropped.
 
 Pipeline: `ingest → parse → classify → extract → graph → describe → render`.
 
+See [`docs/architecture.md`](docs/architecture.md) for a diagram and per-stage
+reference.
+
 ## Install
 
 ```bash
