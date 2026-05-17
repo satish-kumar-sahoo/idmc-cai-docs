@@ -24,13 +24,42 @@ def _norm(s: str | None) -> str:
     return "".join(ch for ch in s.lower() if ch.isalnum())
 
 
+_CONN_PREFIXES = (
+    "serviceconnector-", "serviceconnector_", "appconnection-",
+    "appconnection_", "connection-",
+)
+_REF_EXTS = (".xml", ".wsdl", ".xsd", ".bpel", ".pdd", ".json", ".pd")
+
+
 def _strip_connector_prefix(name: str) -> str:
     # "ServiceConnector-OT-Submit-Consent" / "AppConnection-Foo" -> "OT-Submit-Consent"/"Foo"
-    low = name.lower()
-    for pre in ("serviceconnector-", "serviceconnector_", "appconnection-", "connection-"):
+    low = (name or "").lower()
+    for pre in _CONN_PREFIXES:
         if low.startswith(pre):
             return name[len(pre):]
-    return name
+    return name or ""
+
+
+def _basename_key(value: str | None) -> str:
+    """'project:/SaaSGlobal/metadata/purposes.xml' / '../wsdl/x.wsdl' -> base name."""
+    if not value:
+        return ""
+    v = value.split("?", 1)[0].split("#", 1)[0]
+    v = v.split("project:/", 1)[-1].split("contribution:/", 1)[-1]
+    v = v.replace("\\", "/").rstrip("/")
+    base = v.rsplit("/", 1)[-1]
+    low = base.lower()
+    for ext in _REF_EXTS:
+        if low.endswith(ext):
+            base = base[: -len(ext)]
+            low = base.lower()
+    # also drop a trailing IDMC type infix (foo.AI_CONNECTION -> foo)
+    for infix in (".ai_service_connector", ".ai_connection", ".process_object",
+                  ".process", ".serviceconnector", ".connection", ".guide"):
+        if low.endswith(infix):
+            base = base[: -len(infix)]
+            break
+    return base
 
 
 def build_graph(assets: list[Asset]) -> AssetGraph:
@@ -41,7 +70,13 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
     for a in assets:
         if a.guid:
             by_guid.setdefault(a.guid, a)
-        for nm in (a.name, a.display_name, a.source_relpath.rsplit("/", 1)[-1]):
+        keys = {
+            a.name,
+            a.display_name,
+            _basename_key(a.source_relpath),
+            _strip_connector_prefix(a.name),
+        }
+        for nm in keys:
             if nm:
                 by_name.setdefault(_norm(nm), a)
 
@@ -71,7 +106,14 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
             if ref.target_guid and ref.target_guid in by_guid:
                 target = by_guid[ref.target_guid]
             if target is None:
-                for cand in (ref.target_name, _strip_connector_prefix(ref.target_name or "")):
+                candidates = (
+                    ref.target_name,
+                    _strip_connector_prefix(ref.target_name or ""),
+                    _basename_key(ref.raw),
+                    _basename_key(ref.target_name),
+                    _strip_connector_prefix(_basename_key(ref.raw)),
+                )
+                for cand in candidates:
                     if cand and _norm(cand) in by_name:
                         target = by_name[_norm(cand)]
                         break

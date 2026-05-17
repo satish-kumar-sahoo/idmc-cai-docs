@@ -43,6 +43,25 @@ _CATALOG_RE = re.compile(r"getCatalogResource\(\s*[\"']([^\"']+)[\"']")
 _SECRET_KEY = re.compile(r"(secret|password|passwd|token|apikey|api_key|client_secret|key)$", re.I)
 
 
+# Platform / engine namespaces that are not project dependencies.
+_PLATFORM_MARKERS = (
+    "schemas.active-endpoints.com",
+    "active-endpoints.com",
+    "activebpel.org",
+    "docs.oasis-open.org",
+    "xmlsoap.org",
+    "w3.org",
+    "activevos",
+)
+
+
+def _is_platform_ref(value: str | None) -> bool:
+    if not value:
+        return False
+    v = value.lower()
+    return any(m in v for m in _PLATFORM_MARKERS)
+
+
 def _attr(el, name: str, default: str = "") -> str:
     for k, v in el.attrib.items():
         if k.rsplit("}", 1)[-1] == name:
@@ -345,6 +364,8 @@ def _collect_references(payload) -> list[Reference]:
     # catalog resource references inside any expression / text
     for ex in descendants_local(payload, "expression"):
         for m in _CATALOG_RE.finditer(ex.text or ""):
+            if _is_platform_ref(m.group(1)):
+                continue
             add(
                 Reference(
                     kind="catalog_resource",
@@ -417,6 +438,8 @@ def _collect_bpel_refs(payload) -> list[Reference]:
 
     for imp in descendants_local(payload, "import"):
         loc = _attr(imp, "location") or _attr(imp, "namespace")
+        if _is_platform_ref(loc):
+            continue
         add("catalog_resource", loc, loc, ctx=f"bpel import ({_attr(imp, 'importType') or 'wsdl'})")
     for pl in descendants_local(payload, "partnerLink"):
         nm = _attr(pl, "name")

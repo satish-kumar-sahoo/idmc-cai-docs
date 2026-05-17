@@ -113,7 +113,7 @@ def test_end_to_end_from_zip(tmp_path):
     assert "needs-review" in pages["weird_unknown"].read_text("utf-8")
 
     # no dangling wikilinks (ignore fenced mermaid blocks)
-    note_names = set(pages)
+    note_names = set(pages) | {p.name for p in vault.rglob("*.canvas")}
     fence = re.compile(r"```.*?```", re.DOTALL)
     link = re.compile(r"\[\[([^\]]+)\]\]")
     for p in pages.values():

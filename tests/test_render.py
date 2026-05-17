@@ -88,6 +88,7 @@ def test_no_dangling_wikilinks(tmp_path):
     vault = _build_vault(tmp_path)
     pages = list(vault.rglob("*.md"))
     note_names = {p.stem for p in pages}
+    note_names |= {p.name for p in vault.rglob("*.canvas")}  # canvas is linkable
     link_re = re.compile(r"\[\[([^\]]+)\]\]")
     fence_re = re.compile(r"```.*?```", re.DOTALL)
     for p in pages:
