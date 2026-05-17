@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pdd:process xmlns:pdd="http://schemas.active-endpoints.com/pdd/2006/08/pdd.xsd"
+             name="SaveConfig" location="bpel/SaveConfig.bpel">
+   <pdd:partnerLinks>
+      <pdd:partnerLink name="DASSQLServer">
+         <pdd:partnerRole endpointReference="static" invokeHandler="AeDataAccess"/>
+      </pdd:partnerLink>
+   </pdd:partnerLinks>
+</pdd:process>

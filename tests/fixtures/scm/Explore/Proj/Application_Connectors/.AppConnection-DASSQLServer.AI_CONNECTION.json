@@ -1,0 +1,13 @@
+{
+  "objectInfo": {
+    "id": "3fQumCWzh3lhEYusyDt3aT",
+    "name": "AppConnection-DASSQLServer",
+    "type": "AI_CONNECTION",
+    "metadata": {
+      "modelVersion": { "major": 1, "minor": 0 },
+      "additionalInfo": {
+        "description": "Authoritative description from the sidecar"
+      }
+    }
+  }
+}

@@ -13,26 +13,40 @@ def _make_zip(path: Path, entries: dict[str, bytes]) -> None:
             zf.writestr(name, data)
 
 
-def test_discover_directory(tmp_path: Path):
+def test_discover_directory_allowlists_assets(tmp_path: Path):
     (tmp_path / "a").mkdir()
     (tmp_path / "a" / "proc.xml").write_text("<process/>", encoding="utf-8")
+    (tmp_path / "a" / ".proc.PROCESS.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "flow.bpel").write_text("<bpel:process/>", encoding="utf-8")
     (tmp_path / "note.txt").write_text("hi", encoding="utf-8")
+    (tmp_path / "diagram.jpg").write_bytes(b"\xff\xd8\xff")
+    (tmp_path / ".gitignore").write_text("x", encoding="utf-8")
 
     files = discover(tmp_path)
     rels = {f.relpath for f in files}
-    assert rels == {"a/proc.xml", "note.txt"}
+    assert rels == {"a/proc.xml", "a/.proc.PROCESS.json", "flow.bpel"}
     proc = next(f for f in files if f.relpath == "a/proc.xml")
     assert proc.ext == "xml"
     assert proc.data == b"<process/>"
 
 
-def test_discover_zip(tmp_path: Path):
+def test_discover_zip_skips_noise(tmp_path: Path):
     zp = tmp_path / "export.zip"
-    _make_zip(zp, {"x/proc.PROCESS.xml": b"<process/>", "readme.md": b"# hi"})
+    _make_zip(
+        zp,
+        {
+            "x/proc.PROCESS.xml": b"<process/>",
+            "x/.proc.PROCESS.json": b"{}",
+            "readme.md": b"# hi",
+            ".github/workflows/ci.yml": b"on: push",
+            "scripts/deploy.py": b"print(1)",
+            "img/logo.png": b"\x89PNG",
+        },
+    )
 
     files = discover(zp)
     rels = {f.relpath for f in files}
-    assert rels == {"x/proc.PROCESS.xml", "readme.md"}
+    assert rels == {"x/proc.PROCESS.xml", "x/.proc.PROCESS.json"}
 
 
 def test_nested_zip_is_expanded(tmp_path: Path):

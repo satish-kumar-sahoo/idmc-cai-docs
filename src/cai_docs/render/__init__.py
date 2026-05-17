@@ -25,6 +25,9 @@ _TYPE_TITLE = {
     "process_object": "Process Objects",
     "guide": "Guides",
     "schema": "Schemas",
+    "deployment": "Deployments",
+    "resource": "Resources",
+    "project": "Projects",
     "unknown": "Unclassified",
 }
 

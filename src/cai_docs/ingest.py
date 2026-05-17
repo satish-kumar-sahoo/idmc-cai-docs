@@ -12,9 +12,30 @@ from pathlib import Path
 
 from .models import RawFile
 
-# Files we never surface as assets (binary noise / VCS metadata).
-_SKIP_DIRS = {".git", "__MACOSX", ".cai-work"}
-_SKIP_EXTS = {"zip"}  # nested zips are expanded, not emitted as RawFile
+# Directories that never contain documentable CAI assets.
+_SKIP_DIRS = {
+    ".git", "__MACOSX", ".cai-work", ".github", ".settings", "scripts",
+    ".image",  # IDMC stores process-rendering/layout XML here (presentation only)
+}
+
+# Extensions that are never CAI assets: nested zips (expanded separately),
+# images, and project/build/CI scaffolding files.
+_SKIP_EXTS = {
+    "zip",
+    # images
+    "jpg", "jpeg", "png", "gif", "svg", "ico", "bmp",
+    # project / build / CI scaffolding
+    "project", "buildpath", "bpr", "yml", "yaml", "properties",
+    "md", "py", "txt", "classpath", "gitignore", "gitattributes",
+    "log", "lock", "sh", "bat",
+}
+
+# Asset-relevant extensions kept even if they look unusual.
+_KEEP_EXTS = {"xml", "json", "bpel", "pdd", "wsdl", "xsd", "xslt", "xsl"}
+
+# Directory/project scaffolding the repo writes per folder (OData listing +
+# folder/project marker). Not CAI assets. Leading dot is optional.
+_SKIP_NAME_SUFFIXES = (".folder.json", ".project.json")
 
 
 class ZipSlipError(Exception):
@@ -92,7 +113,12 @@ def discover(input_path: str | Path) -> list[RawFile]:
         if parts & _SKIP_DIRS:
             continue
         ext = path.suffix.lstrip(".").lower()
-        if ext in _SKIP_EXTS:
+        # Allowlist: only emit asset-relevant files. This drops images,
+        # .gitignore/.project/CI scaffolding, etc. without per-type rules.
+        if ext not in _KEEP_EXTS or ext in _SKIP_EXTS:
+            continue
+        lname = path.name.lower()
+        if any(lname.endswith(s) for s in _SKIP_NAME_SUFFIXES):
             continue
         try:
             data = path.read_bytes()

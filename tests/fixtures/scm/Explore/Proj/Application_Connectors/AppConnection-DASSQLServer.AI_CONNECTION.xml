@@ -1,0 +1,20 @@
+<aetgt:getResponse xmlns:aetgt="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd"
+                   xmlns:types1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd">
+   <types1:Item>
+      <types1:EntryId>FHyabd-gt-1606322-2025-05-21T06:12:11.515Z::conn.xml</types1:EntryId>
+      <types1:Name>AppConnection-DASSQLServer</types1:Name>
+      <types1:MimeType>application/xml+connection</types1:MimeType>
+      <types1:Description>DB connection via data access service connector</types1:Description>
+      <types1:PublishedContributionId>project:/Proj/AppConnection-DASSQLServer.conn.xml</types1:PublishedContributionId>
+      <types1:Entry>
+         <connection xmlns="http://schemas.active-endpoints.com/appmodules/connection/2010/10/avosConnection.xsd"
+                     name="AppConnection-DASSQLServer">
+            <referencedServiceConnector>DASConnectorSQLServer</referencedServiceConnector>
+            <properties>
+               <property name="baseUrl">jdbc:sqlserver://db.example.com</property>
+            </properties>
+         </connection>
+      </types1:Entry>
+      <types1:GUID>WILL-BE-OVERRIDDEN-BY-SIDECAR</types1:GUID>
+   </types1:Item>
+</aetgt:getResponse>

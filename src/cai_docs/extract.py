@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import re
 
-from .classify import PROCESS
 from .models import (
     Asset,
     ExpressionItem,
@@ -394,6 +393,40 @@ def _collect_sql(payload) -> list[SqlBlock]:
     return blocks
 
 
+def _ns_blob(doc: XmlDoc, payload) -> str:
+    nss = list(doc.namespaces.values())
+    try:
+        nss += list((payload.nsmap or {}).values())
+    except AttributeError:
+        pass
+    return " ".join(u for u in nss if u).lower()
+
+
+def _collect_bpel_refs(payload) -> list[Reference]:
+    """Light BPEL dependency extraction: imports, partner links, invokes."""
+    refs: list[Reference] = []
+    seen: set[tuple] = set()
+
+    def add(kind, raw, name=None, action=None, ctx=None):
+        sig = (kind, raw, name, action)
+        if raw and sig not in seen:
+            seen.add(sig)
+            refs.append(
+                Reference(kind=kind, raw=raw, target_name=name, action=action, context=ctx)
+            )
+
+    for imp in descendants_local(payload, "import"):
+        loc = _attr(imp, "location") or _attr(imp, "namespace")
+        add("catalog_resource", loc, loc, ctx=f"bpel import ({_attr(imp, 'importType') or 'wsdl'})")
+    for pl in descendants_local(payload, "partnerLink"):
+        nm = _attr(pl, "name")
+        add("connection", nm, nm, ctx="bpel partnerLink")
+    for inv in descendants_local(payload, "invoke"):
+        pl = _attr(inv, "partnerLink")
+        add("connection", pl or _attr(inv, "name"), pl, _attr(inv, "operation"), "bpel invoke")
+    return refs
+
+
 def _collect_expressions(payload) -> list[ExpressionItem]:
     out: list[ExpressionItem] = []
     for ex in descendants_local(payload, "expression"):
@@ -475,10 +508,17 @@ def extract(
     signals: list[str],
     threshold: float = 0.45,
 ) -> Asset:
-    stem = doc.relpath.rsplit("/", 1)[-1]
-    for suf in (".PROCESS.xml", ".xml", ".xsd", ".json"):
-        if stem.lower().endswith(suf.lower()):
+    stem = doc.relpath.rsplit("/", 1)[-1].lstrip(".")
+    for suf in (".bpel", ".pdd", ".wsdl", ".xsd", ".xml", ".json"):
+        if stem.lower().endswith(suf):
             stem = stem[: -len(suf)]
+            break
+    for infix in (
+        ".PROCESS_OBJECT", ".AI_SERVICE_CONNECTOR", ".AI_CONNECTION",
+        ".PROCESS", ".SERVICECONNECTOR", ".CONNECTION", ".GUIDE",
+    ):
+        if stem.upper().endswith(infix):
+            stem = stem[: -len(infix)]
             break
 
     asset = Asset(
@@ -531,7 +571,15 @@ def extract(
             asset.expressions = _collect_expressions(payload)
             asset.sql_blocks = _collect_sql(payload)
 
-            if asset_type == PROCESS or lname(payload).lower() == "process":
+            ns_blob = _ns_blob(doc, payload)
+            is_process_root = lname(payload).lower() == "process"
+            is_bpel = is_process_root and "wsbpel" in ns_blob
+            is_screenflow = is_process_root and not is_bpel and (
+                "avosscreenflow" in ns_blob
+                or next(iter(children_local(payload, "flow")), None) is not None
+            )
+
+            if is_screenflow:
                 inp = next(iter(children_local(payload, "input")), None)
                 outp = next(iter(children_local(payload, "output")), None)
                 tmp = next(iter(children_local(payload, "tempFields")), None)
@@ -543,6 +591,13 @@ def extract(
                     asset.config[_attr(nv, "name")] = (nv.text or "").strip()
                 flow_el = next(iter(children_local(payload, "flow")), None)
                 asset.flow = _build_flow(flow_el)
+            elif is_bpel:
+                asset.references.extend(_collect_bpel_refs(payload))
+                asset.rest_trigger = any(
+                    _attr(r, "createInstance", "").lower() == "yes"
+                    for r in descendants_local(payload, "receive")
+                )
+                asset.notes.append("BPEL process (flow diagram not extracted)")
 
             asset.sample_data = _collect_sample_data(item)
             asset.raw_dump = _raw_dump(payload)

@@ -16,3 +16,6 @@ venv/
 _vault/
 *-vault/
 CAI-Vault/
+
+# Input exports (repo dumps) — large binaries, not source
+*.zip

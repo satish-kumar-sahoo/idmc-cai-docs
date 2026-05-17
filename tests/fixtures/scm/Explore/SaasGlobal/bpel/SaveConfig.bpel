@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpel:process xmlns:bpel="http://docs.oasis-open.org/wsbpel/2.0/process/executable"
+              xmlns:abx="http://www.activebpel.org/bpel/extension"
+              name="SaveConfig"
+              targetNamespace="urn:proj:SaveConfig">
+   <bpel:import importType="http://schemas.xmlsoap.org/wsdl/"
+                location="../../SaaSGlobalVariables/wsdl/saasGlobal.wsdl"
+                namespace="urn:proj:saasGlobal"/>
+   <bpel:partnerLinks>
+      <bpel:partnerLink name="client" partnerLinkType="tns:SaveConfigPLT"/>
+      <bpel:partnerLink name="DASSQLServer" partnerLinkType="tns:DASPLT"/>
+   </bpel:partnerLinks>
+   <bpel:sequence>
+      <bpel:receive partnerLink="client" operation="start" createInstance="yes"/>
+      <bpel:invoke partnerLink="DASSQLServer" operation="executeQuery"/>
+      <bpel:reply partnerLink="client" operation="start"/>
+   </bpel:sequence>
+</bpel:process>

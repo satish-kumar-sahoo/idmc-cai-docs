@@ -1,0 +1,15 @@
+<aetgt:getResponse xmlns:aetgt="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd"
+                   xmlns:types1="http://schemas.active-endpoints.com/appmodules/repository/2010/10/avrepository.xsd">
+   <types1:Item>
+      <types1:EntryId>gclopz-gt-4546181-2025-05-20T07:18:31.102Z::svc.xml</types1:EntryId>
+      <types1:Name>DASConnectorSQLServer</types1:Name>
+      <types1:MimeType>application/xml+businesssconnector</types1:MimeType>
+      <types1:Description>Data access service connector for SQL Server</types1:Description>
+      <types1:PublishedContributionId>project:/Proj/DASConnectorSQLServer.svc.xml</types1:PublishedContributionId>
+      <types1:Entry>
+         <connector name="DASConnectorSQLServer">
+            <action name="SQL DB Query Execution"/>
+         </connector>
+      </types1:Entry>
+   </types1:Item>
+</aetgt:getResponse>

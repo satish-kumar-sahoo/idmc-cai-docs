@@ -18,9 +18,22 @@ CONNECTION = "connection"
 PROCESS_OBJECT = "process_object"
 GUIDE = "guide"
 SCHEMA = "schema"
+DEPLOYMENT = "deployment"
+RESOURCE = "resource"
+PROJECT = "project"
 UNKNOWN = "unknown"
 
-ASSET_TYPES = (PROCESS, SERVICE_CONNECTOR, CONNECTION, PROCESS_OBJECT, GUIDE, SCHEMA)
+ASSET_TYPES = (
+    PROCESS,
+    SERVICE_CONNECTOR,
+    CONNECTION,
+    PROCESS_OBJECT,
+    GUIDE,
+    SCHEMA,
+    DEPLOYMENT,
+    RESOURCE,
+    PROJECT,
+)
 
 _SATURATION = 6.0
 
@@ -35,8 +48,12 @@ _ENTRY_ROOT = {
 }
 
 # Order matters: check the more specific substrings before "process"/"connection".
+# Informatica's own MimeType for service connectors is the (sic) typo
+# "application/xml+businesssconnector".
 _MIME_ORDER = [
     ("serviceconnector", SERVICE_CONNECTOR),
+    ("businessconnector", SERVICE_CONNECTOR),
+    ("businesssconnector", SERVICE_CONNECTOR),
     ("processobject", PROCESS_OBJECT),
     ("connection", CONNECTION),
     ("guide", GUIDE),
@@ -47,15 +64,22 @@ _MIME_ORDER = [
 _FILENAME_SUFFIX = {
     ".process.xml": PROCESS,
     ".serviceconnector.xml": SERVICE_CONNECTOR,
+    ".ai_service_connector.xml": SERVICE_CONNECTOR,
     ".connection.xml": CONNECTION,
+    ".ai_connection.xml": CONNECTION,
     ".processobject.xml": PROCESS_OBJECT,
+    ".process_object.xml": PROCESS_OBJECT,
     ".guide.xml": GUIDE,
+    ".bpel": PROCESS,
+    ".pdd": DEPLOYMENT,
+    ".wsdl": RESOURCE,
     ".xsd": SCHEMA,
 }
 
 _CONTRIB_SUFFIX = {
     ".pd.xml": PROCESS,
     ".sc.xml": SERVICE_CONNECTOR,
+    ".svc.xml": SERVICE_CONNECTOR,
     ".conn.xml": CONNECTION,
     ".po.xml": PROCESS_OBJECT,
     ".gd.xml": GUIDE,
@@ -83,13 +107,19 @@ def classify(doc: XmlDoc) -> tuple[str, float, list[str]]:
             scores[asset_type] += weight
             signals.append(f"{why} -> {asset_type} (+{weight:g})")
 
-    # JSON sidecar authoritative 'type'
+    # JSON sidecar authoritative objectInfo.type (IDMC source-control metadata)
     if doc.json_sidecar and isinstance(doc.json_sidecar, dict):
-        t = str(doc.json_sidecar.get("type", "")).lower()
-        for key, at in _ENTRY_ROOT.items():
-            if key in t:
-                add(at, 4.0, f"json sidecar type={t!r}")
-                break
+        from .sidecar import normalize_object_info
+
+        info = normalize_object_info(doc.raw_text)
+        if info and info.get("_cai_type"):
+            add(info["_cai_type"], 5.0, f"sidecar objectInfo.type={info['type']!r}")
+        else:
+            t = str(doc.json_sidecar.get("type", "")).lower()
+            for key, at in _ENTRY_ROOT.items():
+                if key in t:
+                    add(at, 4.0, f"json sidecar type={t!r}")
+                    break
 
     if doc.tree is not None:
         # Strong: Entry payload root element
@@ -112,12 +142,23 @@ def classify(doc: XmlDoc) -> tuple[str, float, list[str]]:
 
         # Bare (non-enveloped) export: root itself is the payload
         rln = (doc.root_localname or "").lower()
-        if rln in _ENTRY_ROOT:
+        ns_uris = " ".join(doc.namespaces.values())
+        if rln == "process" and "wsbpel" in ns_uris:
+            add(PROCESS, 4.0, "BPEL root <process> (OASIS wsbpel)")
+        elif rln in _ENTRY_ROOT:
             add(_ENTRY_ROOT[rln], 2.0, f"root element <{doc.root_localname}>")
-        if rln == "schema" and any(
-            "XMLSchema" in uri for uri in doc.namespaces.values()
-        ):
+        if rln == "schema" and "XMLSchema" in ns_uris:
             add(SCHEMA, 3.0, "XSD root <schema> in XMLSchema namespace")
+        if rln in ("definitions",) and "wsdl" in ns_uris:
+            add(RESOURCE, 3.0, "WSDL root <definitions>")
+        if rln in ("screenflowcontribution", "servicediscovery", "contribution"):
+            add(RESOURCE, 3.0, f"project resource root <{doc.root_localname}>")
+        # project resource/config xml that matched nothing structural
+        low = doc.relpath.lower()
+        if doc.root_localname and (
+            "/config/" in low or "/metadata/" in low or "/sample-data/" in low
+        ):
+            add(RESOURCE, 1.5, "under config/, metadata/ or sample-data/")
 
         # Medium: PublishedContributionId suffix
         for item in children_local(doc.tree, "Item"):
@@ -130,11 +171,11 @@ def classify(doc: XmlDoc) -> tuple[str, float, list[str]]:
                 add(PROCESS, 1.0, "EntryId ~ ::pd.xml")
             break
 
-    # Medium: filename suffix
+    # Strong: filename TYPE infix (IDMC source-control naming is very reliable)
     name = doc.relpath.lower()
     for suffix, at in _FILENAME_SUFFIX.items():
         if name.endswith(suffix):
-            add(at, 2.0, f"filename ~ {suffix}")
+            add(at, 3.0, f"filename ~ {suffix}")
             break
 
     best = max(scores, key=lambda k: scores[k])

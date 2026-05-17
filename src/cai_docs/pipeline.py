@@ -11,6 +11,7 @@ from .graph import build_graph
 from .ingest import discover
 from .models import RunReport
 from .render import VaultWriter
+from .sidecar import apply_sidecar, normalize_object_info, pair_sidecars
 from .xmlmodel import parse
 
 
@@ -28,13 +29,22 @@ def run(config: Config) -> RunReport:
     raw_files = discover(config.input_path)
     report.files_seen = len(raw_files)
 
+    asset_files, sidecar_meta = pair_sidecars(raw_files)
+
     assets = []
-    for raw in raw_files:
+    for raw in asset_files:
         doc = parse(raw)
         if doc.parse_error is None and (doc.tree is not None or doc.json_sidecar is not None):
             report.files_parsed += 1
         atype, conf, signals = classify(doc)
         asset = extract(doc, atype, conf, signals, config.confidence_threshold)
+
+        info = sidecar_meta.get(raw.relpath)
+        if info is None and doc.json_sidecar is not None:
+            info = normalize_object_info(doc.raw_text)  # unpaired sidecar
+        if info:
+            apply_sidecar(asset, info, config.confidence_threshold)
+
         assets.append(asset)
 
     graph = build_graph(assets)

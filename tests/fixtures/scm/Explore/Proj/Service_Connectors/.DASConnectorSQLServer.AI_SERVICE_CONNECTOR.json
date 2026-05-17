@@ -1,0 +1,8 @@
+{
+  "objectInfo": {
+    "id": "SVCGUID0000000000000001",
+    "name": "DASConnectorSQLServer",
+    "type": "AI_SERVICE_CONNECTOR",
+    "metadata": { "additionalInfo": { "description": "DAS SQL Server connector" } }
+  }
+}
