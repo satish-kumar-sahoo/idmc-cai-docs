@@ -104,6 +104,11 @@
 
 {% for c in connectors %}- {{ c }}
 {% endfor %}{% endif %}
+{% if resources %}
+## Deployed Resources
+
+{% for r in resources %}- {{ r }}
+{% endfor %}{% endif %}
 {% if uses %}
 ## Uses
 

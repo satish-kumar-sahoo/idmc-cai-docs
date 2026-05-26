@@ -220,6 +220,7 @@ class Edge:
     kind: str  # calls-subprocess | uses-connection | uses-service-connector | references-resource
     target_name: str | None = None
     resolved: bool = True
+    raw_target: str | None = None  # original ref.raw (e.g. "project:/.../foo.xml") for display
 
 
 @dataclass

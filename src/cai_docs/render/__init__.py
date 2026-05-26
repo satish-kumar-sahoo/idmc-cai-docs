@@ -400,6 +400,7 @@ class VaultWriter:
 
         asset_tmpl = self.env.get_template("asset.md.j2")
         note_rel: dict[str, str] = {}
+        by_key = graph.by_key()
 
         for a in graph.assets:
             note = names[a.key]
@@ -408,12 +409,34 @@ class VaultWriter:
             note_rel[a.key] = (folder / f"{note}.md").relative_to(out).as_posix()
 
             uses = []
+            resource_rows: list[tuple[str, str, str]] = []
             for e in graph.uses.get(a.key, []):
                 tgt = link_name.get(e.target_key)
+                if e.kind == "references-resource":
+                    if tgt:
+                        link_str = f"[[{tgt}]]"
+                    elif e.raw_target:
+                        link_str = f"`{e.raw_target}`"
+                    else:
+                        link_str = e.target_name or e.target_key
+                    if e.resolved and e.target_key in by_key:
+                        kind = by_key[e.target_key].asset_type
+                    else:
+                        kind = "unresolved"
+                    path = ""
+                    if e.raw_target and (not tgt or e.raw_target != tgt):
+                        path = e.raw_target
+                    resource_rows.append((kind, link_str, path))
+                    continue
                 if tgt:
                     uses.append(f"{e.kind}: [[{tgt}]]")
                 else:
                     uses.append(f"{e.kind}: {e.target_name or e.target_key}")
+            resource_rows.sort(key=lambda r: (r[0], r[1].lower()))
+            resources = [
+                f"{link} — {kind}" + (f" · `{path}`" if path else "")
+                for (kind, link, path) in resource_rows
+            ]
             used_by = [
                 f"{e.kind}: [[{names[e.source_key]}]]"
                 for e in graph.used_by.get(a.key, [])
@@ -447,6 +470,7 @@ class VaultWriter:
                 timeouts=a.timeouts,
                 tables=a.tables,
                 connectors=connectors,
+                resources=resources,
                 uses=uses,
                 used_by=used_by,
                 expressions=_expr_rows(a.expressions[:20]),

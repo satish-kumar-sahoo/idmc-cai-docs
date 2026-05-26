@@ -122,7 +122,14 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
 
     seen: set[tuple[str, str, str]] = set()
 
-    def link(src: Asset, target_key: str, kind: str, target_name: str | None, resolved: bool):
+    def link(
+        src: Asset,
+        target_key: str,
+        kind: str,
+        target_name: str | None,
+        resolved: bool,
+        raw_target: str | None = None,
+    ):
         sig = (src.key, target_key, kind)
         if sig in seen:
             return
@@ -133,6 +140,7 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
             kind=kind,
             target_name=target_name,
             resolved=resolved,
+            raw_target=raw_target,
         )
         g.edges.append(edge)
         g.uses.setdefault(src.key, []).append(edge)
@@ -144,10 +152,17 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
             kind = _EDGE_KIND.get(ref.kind, "references-resource")
             target = resolve(ref)
             if target is not None and target.key != a.key:
-                link(a, target.key, kind, target.name, resolved=True)
+                link(a, target.key, kind, target.name, resolved=True, raw_target=ref.raw)
             elif target is None:
                 label = ref.target_name or ref.raw or "external"
-                link(a, f"external:{kind}:{label}", kind, label, resolved=False)
+                link(
+                    a,
+                    f"external:{kind}:{label}",
+                    kind,
+                    label,
+                    resolved=False,
+                    raw_target=ref.raw,
+                )
                 g.unresolved.append(ref)
 
     _propagate_runtime(g)

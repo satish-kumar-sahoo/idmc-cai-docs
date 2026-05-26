@@ -158,6 +158,52 @@ def test_sample_data_included_when_opted_in(tmp_path):
     assert "kjsdhjgs1009" in create
 
 
+def test_deployed_resources_section_resolved(tmp_path):
+    """When a process references a deployed XML resource via getCatalogResource
+    and the resource asset is present, the process page must surface it under
+    a dedicated `## Deployed Resources` section with the source path — and it
+    must NOT also appear under `## Uses`."""
+    purposes = Asset(
+        source_relpath="SaaSGlobal/metadata/purposes.xml",
+        asset_type="resource",
+        name="purposes",
+        guid="RESGUID00000000000001",
+        confidence=0.95,
+    )
+    vault = _build_vault(tmp_path, extra=[purposes])
+    retrieve = (vault / "spi.retrieveconsents" / "retrieveconsents.md").read_text("utf-8")
+    assert "## Deployed Resources" in retrieve
+    dep_section = retrieve.split("## Deployed Resources", 1)[1].split("\n## ", 1)[0]
+    assert "[[purposes]]" in dep_section
+    assert "resource" in dep_section
+    assert "project:/SaaSGlobal/metadata/purposes.xml" in dep_section
+    # Must not duplicate into the generic Uses section.
+    uses_section = retrieve.split("## Uses", 1)[1].split("\n## ", 1)[0]
+    assert "references-resource" not in uses_section
+    assert "project:/SaaSGlobal/metadata/purposes.xml" not in uses_section
+
+
+def test_deployed_resources_section_unresolved(tmp_path):
+    """When the referenced resource asset isn't in the vault, the section must
+    still surface the raw project:/ path tagged unresolved."""
+    vault = _build_vault(tmp_path)  # no purposes asset added
+    retrieve = (vault / "spi.retrieveconsents" / "retrieveconsents.md").read_text("utf-8")
+    assert "## Deployed Resources" in retrieve
+    dep_section = retrieve.split("## Deployed Resources", 1)[1].split("\n## ", 1)[0]
+    assert "project:/SaaSGlobal/metadata/purposes.xml" in dep_section
+    assert "unresolved" in dep_section
+
+
+def test_no_deployed_resources_section_when_none(tmp_path):
+    """createMultipleIdentifier has no getCatalogResource or BPEL imports — the
+    new section must be absent rather than rendered empty."""
+    vault = _build_vault(tmp_path)
+    create = (vault / "spi.createMultipleIdentifier" / "createMultipleIdentifier.md").read_text(
+        "utf-8"
+    )
+    assert "## Deployed Resources" not in create
+
+
 def test_unknown_tagged_needs_review(tmp_path, synthetic_dir, raw_loader):
     raw = raw_loader(synthetic_dir / "weird_unknown.xml")
     doc = parse(raw)

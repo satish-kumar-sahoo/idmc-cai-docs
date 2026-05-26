@@ -50,3 +50,39 @@ def test_unresolved_becomes_external(real_create):
     assert any(not e.resolved and e.target_key.startswith("external:") for e in g.edges)
     # the process still has outgoing 'uses' edges recorded
     assert g.uses.get(create.key)
+
+
+def test_catalog_resource_edge_carries_raw_path_resolved(real_retrieve):
+    """retrieveconsents references project:/SaaSGlobal/metadata/purposes.xml via
+    getCatalogResource. The resulting edge must keep that raw path so the
+    renderer can display it under Deployed Resources."""
+    retrieve = _asset(real_retrieve)
+    purposes = Asset(
+        source_relpath="SaaSGlobal/metadata/purposes.xml",
+        asset_type="resource",
+        name="purposes",
+        guid="RESGUID00000000000001",
+    )
+    g = build_graph([retrieve, purposes])
+    res_edges = [
+        e for e in g.uses.get(retrieve.key, [])
+        if e.kind == "references-resource"
+    ]
+    assert res_edges, "expected at least one references-resource edge"
+    assert any(
+        e.resolved and e.raw_target == "project:/SaaSGlobal/metadata/purposes.xml"
+        for e in res_edges
+    )
+
+
+def test_catalog_resource_edge_carries_raw_path_unresolved(real_retrieve):
+    retrieve = _asset(real_retrieve)
+    g = build_graph([retrieve])  # no purposes asset → unresolved
+    res_edges = [
+        e for e in g.uses.get(retrieve.key, [])
+        if e.kind == "references-resource"
+    ]
+    assert any(
+        not e.resolved and e.raw_target == "project:/SaaSGlobal/metadata/purposes.xml"
+        for e in res_edges
+    )
