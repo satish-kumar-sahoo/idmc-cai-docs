@@ -130,7 +130,10 @@ def build_graph(assets: list[Asset]) -> AssetGraph:
         resolved: bool,
         raw_target: str | None = None,
     ):
-        sig = (src.key, target_key, kind)
+        # Two imports that happen to map to the same vault asset (e.g. a process
+        # importing both saasGlobal.xsd and saasGlobal.wsdl) are still distinct
+        # deployed-resource dependencies, so include raw_target in the dedup key.
+        sig = (src.key, target_key, kind, raw_target)
         if sig in seen:
             return
         seen.add(sig)

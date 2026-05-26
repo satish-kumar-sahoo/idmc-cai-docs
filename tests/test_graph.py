@@ -1,7 +1,7 @@
 from cai_docs.classify import classify
 from cai_docs.extract import extract
 from cai_docs.graph import build_graph
-from cai_docs.models import Asset
+from cai_docs.models import Asset, Reference
 from cai_docs.xmlmodel import parse
 
 
@@ -73,6 +73,50 @@ def test_catalog_resource_edge_carries_raw_path_resolved(real_retrieve):
         e.resolved and e.raw_target == "project:/SaaSGlobal/metadata/purposes.xml"
         for e in res_edges
     )
+
+
+def test_catalog_resource_two_imports_to_same_asset_keep_distinct_edges():
+    """A BPEL process can import both saasGlobal.xsd and saasGlobal.wsdl — they
+    resolve to the same `saasGlobal` resource asset but are distinct deployed
+    XML files, so both must appear as separate edges (and separate
+    Deployed-Resources rows). Dedup-by-(src,target,kind) was dropping the
+    second one."""
+    proc = Asset(
+        source_relpath="SaveCollectionPoints.bpel",
+        asset_type="process",
+        name="SaveCollectionPoints",
+        guid="PROCGUID0000000000001",
+        references=[
+            Reference(
+                kind="catalog_resource",
+                raw="../../SaaSGlobalVariables/schema/saasGlobal.xsd",
+                target_name="../../SaaSGlobalVariables/schema/saasGlobal.xsd",
+                context="bpel import (xsd)",
+            ),
+            Reference(
+                kind="catalog_resource",
+                raw="../../SaaSGlobalVariables/wsdl/saasGlobal.wsdl",
+                target_name="../../SaaSGlobalVariables/wsdl/saasGlobal.wsdl",
+                context="bpel import (wsdl)",
+            ),
+        ],
+    )
+    saas = Asset(
+        source_relpath="SaaSGlobalVariables/wsdl/saasGlobal.wsdl",
+        asset_type="resource",
+        name="saasGlobal",
+        guid="RESGUID00000000000002",
+    )
+    g = build_graph([proc, saas])
+    res_edges = [
+        e for e in g.uses.get(proc.key, [])
+        if e.kind == "references-resource"
+    ]
+    raws = {e.raw_target for e in res_edges}
+    assert raws == {
+        "../../SaaSGlobalVariables/schema/saasGlobal.xsd",
+        "../../SaaSGlobalVariables/wsdl/saasGlobal.wsdl",
+    }, f"expected both imports as distinct edges, got {raws}"
 
 
 def test_catalog_resource_edge_carries_raw_path_unresolved(real_retrieve):

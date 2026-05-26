@@ -437,11 +437,11 @@ class VaultWriter:
                 f"{link} — {kind}" + (f" · `{path}`" if path else "")
                 for (kind, link, path) in resource_rows
             ]
-            used_by = [
+            used_by = sorted({
                 f"{e.kind}: [[{names[e.source_key]}]]"
                 for e in graph.used_by.get(a.key, [])
                 if e.source_key in names
-            ]
+            })
             connectors = sorted(
                 {
                     f"`{r.target_name}`{(' / ' + r.action) if r.action else ''}"
